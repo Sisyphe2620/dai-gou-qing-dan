@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>代购清单</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f4f2ec;
+        --surface: #fffdf8;
+        --surface-2: #ece8dd;
+        --ink: #1c1a16;
+        --ink-2: #5c564a;
+        --ink-3: #8d8676;
+        --line: #ddd6c6;
+        --urgent: #c93a22;
+        --urgent-soft: #fbe9e2;
+        --watch: #0f766e;
+        --watch-soft: #e2f1ee;
+        --gold: #b8860b;
+        --gold-soft: #f6edd3;
+        --shadow: 0 1px 2px rgba(28, 26, 22, .05), 0 10px 28px -14px rgba(28, 26, 22, .22);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16150f;
+          --surface: #201e17;
+          --surface-2: #2a271e;
+          --ink: #f0ead9;
+          --ink-2: #bdb49e;
+          --ink-3: #8a8271;
+          --line: #38342a;
+          --urgent: #ff7a5c;
+          --urgent-soft: #3a2019;
+          --watch: #4cc9b8;
+          --watch-soft: #14302c;
+          --gold: #d9a441;
+          --gold-soft: #3a3020;
+          --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 30px -16px rgba(0,0,0,.7);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        line-height: 1.6;
+      }
+      .wrap { max-width: 880px; margin: 0 auto; padding: 28px 18px 56px; }
+
+      /* ---------- Intro ---------- */
+      .intro { padding: 10px 2px 22px; }
+      .intro h1 {
+        font-family: "Noto Serif SC", "Noto Sans SC", serif;
+        font-size: clamp(30px, 6vw, 44px);
+        font-weight: 900;
+        letter-spacing: .02em;
+        margin: 0 0 8px;
+        line-height: 1.2;
+      }
+      .intro p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 34em; }
+      .intro p b { color: var(--ink); font-weight: 700; }
+
+      /* ---------- Summary strip ---------- */
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 4px 0 30px;
+      }
+      .stat {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 16px 12px;
+        box-shadow: var(--shadow);
+      }
+      .stat .num {
+        font-family: "Noto Serif SC", serif;
+        font-size: 30px;
+        font-weight: 900;
+        line-height: 1.1;
+      }
+      .stat .lbl { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+      .stat.urgent .num { color: var(--urgent); }
+      .stat.watch .num { color: var(--watch); }
+
+      /* ---------- Views & group entry cards ---------- */
+      #homeView[hidden], #groupView[hidden], section[hidden] { display: none; }
+      .group-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 30px;
+      }
+      .group-card {
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 24px 20px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        color: var(--ink);
+        transition: transform .15s, border-color .15s;
+      }
+      .group-card:hover { transform: translateY(-2px); border-color: var(--ink-3); }
+      .group-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+      .gc-title {
+        font-family: "Noto Serif SC", serif;
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1.2;
+      }
+      .urgent-card .gc-title { color: var(--urgent); }
+      .watch-card .gc-title { color: var(--watch); }
+      .gc-desc { font-size: 14px; color: var(--ink-2); }
+      .gc-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+      .gc-count { font-size: 13.5px; font-weight: 700; color: var(--ink-3); }
+      .gc-arrow { font-size: 26px; line-height: 1; color: var(--ink-3); }
+      @media (max-width: 520px) {
+        .group-cards { grid-template-columns: 1fr; }
+        .gc-title { font-size: 24px; }
+      }
+
+      /* ---------- Group view top bar ---------- */
+      .group-top { margin-bottom: 22px; }
+      .back-btn {
+        font: inherit;
+        font-size: 14.5px;
+        font-weight: 700;
+        cursor: pointer;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 7px 18px 7px 14px;
+        box-shadow: var(--shadow);
+      }
+      .back-btn:hover { border-color: var(--ink-3); }
+      .back-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+      /* ---------- Place filter ---------- */
+      .filter {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: -6px 0 30px;
+      }
+      .filter .flabel { font-size: 13.5px; font-weight: 700; color: var(--ink-2); margin-right: 2px; }
+      .chip {
+        font: inherit;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--ink-2);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 16px;
+        cursor: pointer;
+        line-height: 1.5;
+        transition: background .15s, color .15s, border-color .15s;
+      }
+      .chip:hover { border-color: var(--ink-3); color: var(--ink); }
+      .chip[aria-pressed="true"] {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: var(--bg);
+        font-weight: 700;
+      }
+      .chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+      .tag.place { background: var(--surface-2); color: var(--ink-2); }
+      .tag.cat { background: var(--gold-soft); color: var(--gold); }
+
+      /* ---------- Category filter ---------- */
+      .cat-row { margin-top: -18px; }
+      .cat-toggle .caret { display: inline-block; margin-left: 5px; font-size: 11px; transition: transform .15s; }
+      .cat-toggle[aria-expanded="true"] .caret { transform: rotate(180deg); }
+      .cat-panel {
+        flex-basis: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+      }
+      .cat-panel[hidden] { display: none; }
+      .item[hidden], .filter-none[hidden], .filter[hidden], .empty[hidden] { display: none; }
+      .filter-none {
+        border: 1.5px dashed var(--line);
+        border-radius: 10px;
+        padding: 18px;
+        text-align: center;
+        color: var(--ink-3);
+        font-size: 13.5px;
+      }
+
+      /* ---------- Sections ---------- */
+      section { margin-bottom: 34px; }
+      .sec-head {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--ink);
+        margin-bottom: 16px;
+      }
+      section.watch-sec .sec-head { border-bottom-color: var(--watch); }
+      section.urgent-sec .sec-head { border-bottom-color: var(--urgent); }
+      .sec-head h2 {
+        font-family: "Noto Serif SC", serif;
+        font-size: 22px;
+        font-weight: 900;
+        margin: 0;
+        letter-spacing: .02em;
+      }
+      .sec-head .desc { color: var(--ink-2); font-size: 13.5px; }
+      .sec-head .count {
+        margin-left: auto;
+        font-size: 13px;
+        color: var(--ink-3);
+        white-space: nowrap;
+      }
+
+      /* ---------- Item cards (used once items are added) ---------- */
+      .items { display: grid; gap: 8px; }
+      .item {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        padding: 10px 14px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 4px 16px;
+        align-items: start;
+      }
+      .item .name { font-size: 15.5px; font-weight: 700; line-height: 1.4; }
+      .item .note { grid-column: 1 / -1; color: var(--ink-2); font-size: 13px; }
+      .item .meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+      .item .price { text-align: right; }
+      .item .price .now { font-family: "Noto Serif SC", serif; font-size: 17px; font-weight: 900; }
+      .item .price .was { font-size: 12.5px; color: var(--ink-3); text-decoration: line-through; }
+      .tag {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 999px;
+        line-height: 1.7;
+      }
+      .tag.urgent { background: var(--urgent-soft); color: var(--urgent); }
+      .tag.watch { background: var(--watch-soft); color: var(--watch); }
+      .tag.drop { background: var(--urgent-soft); color: var(--urgent); }
+
+      /* ---------- Buy / restore buttons ---------- */
+      .buy-btn {
+        font: inherit;
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+        color: var(--ink-2);
+        background: transparent;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 3px 12px;
+        margin-left: auto;
+        white-space: nowrap;
+      }
+      .buy-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+      .buy-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+      .clear-btn {
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        color: var(--urgent);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 16px;
+        box-shadow: var(--shadow);
+      }
+      .clear-btn:hover { border-color: var(--urgent); }
+      .clear-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+      .clear-btn[disabled] { opacity: .45; cursor: default; }
+
+      /* ---------- Empty state ---------- */
+      .empty {
+        border: 1.5px dashed var(--line);
+        border-radius: 10px;
+        padding: 30px 20px;
+        text-align: center;
+        color: var(--ink-3);
+        background: transparent;
+      }
+      .empty .big { font-size: 15px; font-weight: 500; color: var(--ink-2); margin-bottom: 4px; }
+      .empty .small { font-size: 13px; }
+
+      /* ---------- How to add ---------- */
+      .howto {
+        background: var(--surface-2);
+        border-radius: 10px;
+        padding: 16px 18px;
+        font-size: 14px;
+        color: var(--ink-2);
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .howto svg { flex: none; margin-top: 2px; color: var(--ink-3); }
+      .howto b { color: var(--ink); }
+
+      @media (max-width: 520px) {
+        .wrap { padding: 20px 14px 44px; }
+        .summary { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .stat { padding: 11px 12px 9px; }
+        .stat .num { font-size: 24px; }
+        .stat .lbl { font-size: 12px; }
+        .sec-head { flex-wrap: wrap; gap: 4px 10px; }
+        .sec-head .count { margin-left: 0; }
+        .item { grid-template-columns: 1fr; }
+        .item .price { text-align: left; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <div id="homeView">
+      <div class="intro">
+        <h1>想买，还没下单的</h1>
+        <p>这张清单收着所有<b>计划代购、还没买</b>的东西，分成两类：<b>待购买</b>的近期就要买；<b>等折扣</b>的不急，盯着价格，降了再出手。点下面的板块进去，看每一类都有些什么。买好了的点「已购买」，会进「已购清单」，7 天内还能恢复。</p>
+      </div>
+
+      <div class="summary" aria-label="清单概览">
+        <div class="stat">
+          <div class="num" id="statTotal">3</div>
+          <div class="lbl">清单总数</div>
+        </div>
+        <div class="stat urgent">
+          <div class="num" id="statUrgent">1</div>
+          <div class="lbl">待购买</div>
+        </div>
+        <div class="stat watch">
+          <div class="num" id="statWatch">2</div>
+          <div class="lbl">等折扣</div>
+        </div>
+      </div>
+
+      <div class="group-cards">
+        <button type="button" class="group-card urgent-card" data-group="urgent">
+          <span class="gc-title">待购买</span>
+          <span class="gc-desc">近期就要买，别拖</span>
+          <span class="gc-foot"><span class="gc-count">1 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
+        </button>
+        <button type="button" class="group-card watch-card" data-group="watch">
+          <span class="gc-title">等折扣</span>
+          <span class="gc-desc">先观望，等降价或有活动再买</span>
+          <span class="gc-foot"><span class="gc-count">2 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
+        </button>
+        <button type="button" class="group-card" data-group="purchased">
+          <span class="gc-title">已购清单</span>
+          <span class="gc-desc">买好了的都在这里，7 天内可恢复</span>
+          <span class="gc-foot"><span class="gc-count">0 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
+        </button>
+      </div>
+      </div>
+
+      <div id="groupView" hidden>
+      <div class="group-top">
+        <button type="button" class="back-btn" id="backBtn">‹ 返回</button>
+      </div>
+
+      <div class="filter" id="placeFilter" role="group" aria-label="按购买地点筛选">
+        <span class="flabel">购买地点</span>
+        <button type="button" class="chip" data-filter="all" aria-pressed="true">全部</button>
+        <button type="button" class="chip" data-filter="宜家" aria-pressed="false">宜家</button>
+      </div>
+
+      <div class="filter cat-row" id="catFilter" role="group" aria-label="按物品类型筛选">
+        <span class="flabel">物品类型</span>
+        <button type="button" class="chip cat-toggle" id="catToggle" aria-expanded="false" aria-controls="catPanel">分类<span class="caret" aria-hidden="true">▾</span></button>
+        <span class="flabel" id="catCurrent" aria-live="polite">全部类型</span>
+        <div class="cat-panel" id="catPanel" hidden>
+          <button type="button" class="chip" data-cat="all" aria-pressed="true">全部类型</button>
+          <button type="button" class="chip" data-cat="玩具类" aria-pressed="false">玩具类</button>
+          <button type="button" class="chip" data-cat="工具类" aria-pressed="false">工具类</button>
+          <button type="button" class="chip" data-cat="厨具类" aria-pressed="false">厨具类</button>
+          <button type="button" class="chip" data-cat="日用品" aria-pressed="false">日用品</button>
+          <button type="button" class="chip" data-cat="食物" aria-pressed="false">食物</button>
+        </div>
+      </div>
+
+      <section class="urgent-sec" data-group="urgent" aria-labelledby="urgent-title">
+        <div class="sec-head">
+          <h2 id="urgent-title">待购买</h2>
+          <span class="desc">近期就要买，别拖</span>
+          <span class="count">1 件</span>
+        </div>
+        <div class="items">
+          <article class="item" data-id="basin" data-place="宜家" data-cat="厨具类">
+            <div class="name">金属带孔盆 <span class="tag place">宜家</span> <span class="tag cat">厨具类</span></div>
+            <div class="price">
+              <div class="now">待定</div>
+            </div>
+            <p class="note">去宜家买，具体款式和价格到店再定。</p>
+            <div class="meta">
+              <span>购买地点：宜家</span>
+              <button type="button" class="buy-btn" data-buy="basin">✓ 已购买</button>
+            </div>
+          </article>
+        </div>
+        <div class="filter-none" hidden>这一栏没有符合当前筛选的商品。</div>
+      </section>
+
+      <section class="watch-sec" data-group="watch" aria-labelledby="watch-title">
+        <div class="sec-head">
+          <h2 id="watch-title">等折扣</h2>
+          <span class="desc">先观望，等降价或有活动再买</span>
+          <span class="count">2 件</span>
+        </div>
+        <div class="items">
+          <article class="item" data-id="stormtrooper-kenner" data-cat="玩具类">
+            <div class="name">星战 50 周年黑系列 风暴兵 Kenner 复古卡版 <span class="tag watch">等开订</span> <span class="tag cat">玩具类</span></div>
+            <div class="price">
+              <div class="now">未定价</div>
+            </div>
+            <p class="note">还没开预购，预计 2027 年才上架（美国 Target / Walmart / Disney Store，海外走 Fan Channel）。普通金卡版已开预购，29.99 美元，2027 年春季发售。</p>
+            <div class="meta">
+              <span>状态：等开订</span>
+              <span>下次检查：2026-11-23</span>
+              <button type="button" class="buy-btn" data-buy="stormtrooper-kenner">✓ 已购买</button>
+            </div>
+          </article>
+          <article class="item" data-id="batman-inart" data-cat="玩具类">
+            <div class="name">INART 绝对蝙蝠侠 <span class="tag watch">等预售</span> <span class="tag cat">玩具类</span></div>
+            <div class="price">
+              <div class="now">未定价</div>
+            </div>
+            <p class="note">原型已于 2026 年 10 月 3–4 日在上海 Wonder Festival 展出，暂无官宣、无售价、无淘宝预售。</p>
+            <div class="meta">
+              <span>状态：等预售</span>
+              <span>下次检查：约 2026-12-05</span>
+              <button type="button" class="buy-btn" data-buy="batman-inart">✓ 已购买</button>
+            </div>
+          </article>
+        </div>
+        <div class="filter-none" hidden>这一栏没有符合当前筛选的商品。</div>
+      </section>
+
+      <section data-group="purchased" aria-labelledby="purchased-title">
+        <div class="sec-head">
+          <h2 id="purchased-title">已购清单</h2>
+          <span class="desc">7 天内可恢复，过期自动删除</span>
+          <span class="count">0 件</span>
+        </div>
+        <div class="filter" style="margin: 0 0 16px;">
+          <button type="button" class="clear-btn" id="clearPurchased">清空已购清单</button>
+        </div>
+        <div class="items" id="purchasedItems"></div>
+        <div class="empty" id="purchasedEmpty">
+          <div class="big">已购清单还是空的</div>
+          <div class="small">买好了的东西点「已购买」，就会出现在这里。</div>
+        </div>
+      </section>
+      </div>
+
+      <div class="howto">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+        <div><b>怎么往里加：</b>直接语音告诉我想买什么、急不急、有没有目标价，要去某个地方买的也一并说（比如「去 Costco 买」），我就更新到这张清单上，并标好购买地点。买好了点卡片上的「已购买」，东西会进「已购清单」，7 天内可以恢复，超过 7 天自动删除；已购清单里的「清空」会一次删掉里面的全部东西。</div>
+      </div>
+    </main>
+    <script>
+      (function () {
+        var LS_PURCHASED = 'daigou-purchased-v1';
+        var LS_GONE = 'daigou-gone-v1';
+        var SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+        var DAY = 24 * 60 * 60 * 1000;
+
+        function readJSON(key, fallback) {
+          try {
+            var v = JSON.parse(localStorage.getItem(key));
+            return v !== null && typeof v === 'object' ? v : fallback;
+          } catch (e) { return fallback; }
+        }
+        function writeJSON(key, val) {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+        }
+
+        /* Expired purchases (>7 days) become permanently gone: they leave the
+           purchased list and never come back to the shopping list. */
+        function loadStore() {
+          var purchased = readJSON(LS_PURCHASED, {});
+          var gone = readJSON(LS_GONE, []);
+          if (!Array.isArray(gone)) gone = [];
+          var now = Date.now();
+          var changed = false;
+          Object.keys(purchased).forEach(function (id) {
+            if (now - purchased[id] > SEVEN_DAYS) {
+              delete purchased[id];
+              if (gone.indexOf(id) === -1) gone.push(id);
+              changed = true;
+            }
+          });
+          if (changed) { writeJSON(LS_PURCHASED, purchased); writeJSON(LS_GONE, gone); }
+          return { purchased: purchased, gone: gone };
+        }
+        var store = loadStore();
+
+        var placeChips = Array.prototype.slice.call(document.querySelectorAll('.chip[data-filter]'));
+        var catChips = Array.prototype.slice.call(document.querySelectorAll('.chip[data-cat]'));
+        var sections = Array.prototype.slice.call(document.querySelectorAll('section[data-group]'));
+        var toggle = document.getElementById('catToggle');
+        var panel = document.getElementById('catPanel');
+        var catCurrent = document.getElementById('catCurrent');
+        var homeView = document.getElementById('homeView');
+        var groupView = document.getElementById('groupView');
+        var backBtn = document.getElementById('backBtn');
+        var groupCards = Array.prototype.slice.call(document.querySelectorAll('.group-card'));
+        var placeFilter = document.getElementById('placeFilter');
+        var catFilter = document.getElementById('catFilter');
+        var purchasedItems = document.getElementById('purchasedItems');
+        var purchasedEmpty = document.getElementById('purchasedEmpty');
+        var clearBtn = document.getElementById('clearPurchased');
+        var statTotal = document.getElementById('statTotal');
+        var statUrgent = document.getElementById('statUrgent');
+        var statWatch = document.getElementById('statWatch');
+        var state = { place: 'all', cat: 'all', group: null };
+
+        function isPurchased(id) { return Object.prototype.hasOwnProperty.call(store.purchased, id); }
+        function isGone(id) { return store.gone.indexOf(id) !== -1; }
+        function activeItems() {
+          return Array.prototype.slice.call(document.querySelectorAll('.item[data-id]')).filter(function (item) {
+            var id = item.getAttribute('data-id');
+            return !isPurchased(id) && !isGone(id);
+          });
+        }
+
+        function fmtDate(ms) {
+          var d = new Date(ms);
+          return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+        }
+
+        function renderPurchased() {
+          var sec = document.querySelector('section[data-group="purchased"]');
+          purchasedItems.innerHTML = '';
+          var ids = Object.keys(store.purchased);
+          ids.forEach(function (id) {
+            var src = document.querySelector('.item[data-id="' + id + '"]');
+            if (!src) return;
+            var clone = src.cloneNode(true);
+            var btn = clone.querySelector('[data-buy]');
+            if (btn) {
+              btn.textContent = '恢复';
+              btn.removeAttribute('data-buy');
+              btn.setAttribute('data-restore', id);
+            }
+            var meta = clone.querySelector('.meta');
+            if (meta) {
+              var left = Math.max(0, SEVEN_DAYS - (Date.now() - store.purchased[id]));
+              var days = Math.max(1, Math.ceil(left / DAY));
+              var span = document.createElement('span');
+              span.textContent = '购买于 ' + fmtDate(store.purchased[id]) + '，还剩 ' + days + ' 天可恢复';
+              meta.insertBefore(span, meta.firstChild);
+            }
+            purchasedItems.appendChild(clone);
+          });
+          if (purchasedEmpty) purchasedEmpty.hidden = ids.length !== 0;
+          if (clearBtn) clearBtn.disabled = ids.length === 0;
+          if (sec) {
+            var countEl = sec.querySelector('.sec-head .count');
+            if (countEl) countEl.textContent = ids.length + ' 件';
+          }
+          var card = document.querySelector('.group-card[data-group="purchased"] .gc-count');
+          if (card) card.textContent = ids.length + ' 件';
+        }
+
+        function renderCounts() {
+          var active = activeItems();
+          var urgent = active.filter(function (item) { return item.closest('section[data-group="urgent"]'); }).length;
+          var watch = active.filter(function (item) { return item.closest('section[data-group="watch"]'); }).length;
+          if (statTotal) statTotal.textContent = active.length;
+          if (statUrgent) statUrgent.textContent = urgent;
+          if (statWatch) statWatch.textContent = watch;
+          var uc = document.querySelector('.group-card[data-group="urgent"] .gc-count');
+          if (uc) uc.textContent = urgent + ' 件';
+          var wc = document.querySelector('.group-card[data-group="watch"] .gc-count');
+          if (wc) wc.textContent = watch + ' 件';
+        }
+
+        function applyFilters() {
+          placeChips.forEach(function (chip) {
+            chip.setAttribute('aria-pressed', chip.getAttribute('data-filter') === state.place ? 'true' : 'false');
+          });
+          catChips.forEach(function (chip) {
+            chip.setAttribute('aria-pressed', chip.getAttribute('data-cat') === state.cat ? 'true' : 'false');
+          });
+          if (catCurrent) catCurrent.textContent = state.cat === 'all' ? '全部类型' : state.cat;
+          var isPurchasedView = state.group === 'purchased';
+          if (placeFilter) placeFilter.hidden = isPurchasedView;
+          if (catFilter) catFilter.hidden = isPurchasedView;
+          sections.forEach(function (sec) {
+            var g = sec.getAttribute('data-group');
+            var active = g === state.group;
+            sec.hidden = !active;
+            if (!active || g === 'purchased') return;
+            var items = Array.prototype.slice.call(sec.querySelectorAll('.item'));
+            var visible = 0;
+            items.forEach(function (item) {
+              var id = item.getAttribute('data-id');
+              var gone = id && isGone(id);
+              var bought = id && isPurchased(id);
+              var placeOk = state.place === 'all' || item.getAttribute('data-place') === state.place;
+              var catOk = state.cat === 'all' || item.getAttribute('data-cat') === state.cat;
+              var show = !gone && !bought && placeOk && catOk;
+              item.hidden = !show;
+              if (show) visible++;
+            });
+            var countEl = sec.querySelector('.sec-head .count');
+            if (countEl) countEl.textContent = visible + ' 件';
+            var noneEl = sec.querySelector('.filter-none');
+            if (noneEl) noneEl.hidden = visible !== 0;
+          });
+          renderPurchased();
+          renderCounts();
+        }
+
+        placeChips.forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            state.place = chip.getAttribute('data-filter');
+            applyFilters();
+          });
+        });
+        catChips.forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            state.cat = chip.getAttribute('data-cat');
+            applyFilters();
+          });
+        });
+        if (toggle && panel) {
+          toggle.addEventListener('click', function () {
+            var open = panel.hidden;
+            panel.hidden = !open;
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          });
+        }
+        groupCards.forEach(function (card) {
+          card.addEventListener('click', function () {
+            state.group = card.getAttribute('data-group');
+            homeView.hidden = true;
+            groupView.hidden = false;
+            applyFilters();
+            window.scrollTo(0, 0);
+          });
+        });
+        if (backBtn) {
+          backBtn.addEventListener('click', function () {
+            groupView.hidden = true;
+            homeView.hidden = false;
+            window.scrollTo(0, 0);
+          });
+        }
+
+        document.addEventListener('click', function (e) {
+          var t = e.target;
+          if (!t || !t.closest) return;
+          var buy = t.closest('[data-buy]');
+          if (buy) {
+            var id = buy.getAttribute('data-buy');
+            store.purchased[id] = Date.now();
+            writeJSON(LS_PURCHASED, store.purchased);
+            applyFilters();
+            return;
+          }
+          var res = t.closest('[data-restore]');
+          if (res) {
+            var rid = res.getAttribute('data-restore');
+            delete store.purchased[rid];
+            writeJSON(LS_PURCHASED, store.purchased);
+            applyFilters();
+          }
+        });
+
+        if (clearBtn) {
+          clearBtn.addEventListener('click', function () {
+            var ids = Object.keys(store.purchased);
+            if (!ids.length) return;
+            if (!window.confirm('确定要清空已购清单吗？里面的 ' + ids.length + ' 件东西以后都不会再出现。')) return;
+            ids.forEach(function (id) {
+              delete store.purchased[id];
+              if (store.gone.indexOf(id) === -1) store.gone.push(id);
+            });
+            writeJSON(LS_PURCHASED, store.purchased);
+            writeJSON(LS_GONE, store.gone);
+            applyFilters();
+          });
+        }
+
+        applyFilters();
+      })();
+    </script>
+
+  </body>
+</html>
