@@ -587,6 +587,7 @@
             var src = document.querySelector('.item[data-id="' + id + '"]');
             if (!src) return;
             var clone = src.cloneNode(true);
+            clone.hidden = false; /* cloneNode 会连 hidden 属性一起复制过来，原卡片买后是隐藏的，不清掉克隆就一直看不见 */
             var btn = clone.querySelector('[data-buy]');
             if (btn) {
               btn.textContent = '恢复';
