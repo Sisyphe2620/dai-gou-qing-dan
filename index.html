@@ -246,13 +246,29 @@
         box-shadow: var(--shadow);
         padding: 10px 14px;
         display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 4px 16px;
+        grid-template-columns: 44px 1fr auto;
+        gap: 4px 12px;
         align-items: start;
       }
-      .item .name { font-size: 15.5px; font-weight: 700; line-height: 1.4; }
-      .item .note { grid-column: 1 / -1; color: var(--ink-2); font-size: 13px; }
-      .item .meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+      .item .thumb {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background: var(--surface-2);
+        overflow: hidden;
+      }
+      .item .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .item[data-cat="玩具类"] .thumb { background: #e8b64c; }
+      .item[data-cat="工具类"] .thumb { background: #7a9cc6; }
+      .item[data-cat="厨具类"] .thumb { background: #5fae8f; }
+      .item[data-cat="日用品"] .thumb { background: #c98a7a; }
+      .item[data-cat="食物"] .thumb { background: #d97b4f; }
+      .item .name { grid-column: 2; font-size: 15.5px; font-weight: 700; line-height: 1.4; }
+      .item .price { grid-column: 3; }
+      .item .note { grid-column: 2 / -1; grid-row: 2; color: var(--ink-2); font-size: 13px; }
+      .item .meta { grid-column: 1 / -1; grid-row: 3; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
       .item .price { text-align: right; }
       .item .price .now { font-family: "Noto Serif SC", serif; font-size: 17px; font-weight: 900; }
       .item .price .was { font-size: 12.5px; color: var(--ink-3); text-decoration: line-through; }
@@ -334,8 +350,12 @@
         .stat .lbl { font-size: 12px; }
         .sec-head { flex-wrap: wrap; gap: 4px 10px; }
         .sec-head .count { margin-left: 0; }
-        .item { grid-template-columns: 1fr; }
-        .item .price { text-align: left; }
+        .item { grid-template-columns: 40px 1fr; }
+        .item .thumb { width: 40px; height: 40px; grid-row: 1 / span 2; }
+        .item .name { grid-column: 2; }
+        .item .price { grid-column: 2; grid-row: 2; text-align: left; }
+        .item .note { grid-column: 1 / -1; grid-row: 3; }
+        .item .meta { grid-row: 4; }
       }
     </style>
   </head>
@@ -414,6 +434,7 @@
         </div>
         <div class="items">
           <article class="item" data-id="basin" data-place="宜家" data-cat="厨具类">
+            <div class="thumb" aria-hidden="true"></div>
             <div class="name">金属带孔盆 <span class="tag place">宜家</span> <span class="tag cat">厨具类</span></div>
             <div class="price">
               <div class="now">待定</div>
@@ -436,6 +457,7 @@
         </div>
         <div class="items">
           <article class="item" data-id="stormtrooper-kenner" data-cat="玩具类">
+            <div class="thumb" aria-hidden="true"></div>
             <div class="name">星战 50 周年黑系列 风暴兵 Kenner 复古卡版 <span class="tag watch">等开订</span> <span class="tag cat">玩具类</span></div>
             <div class="price">
               <div class="now">未定价</div>
@@ -448,6 +470,7 @@
             </div>
           </article>
           <article class="item" data-id="batman-inart" data-cat="玩具类">
+            <div class="thumb" aria-hidden="true"></div>
             <div class="name">INART 绝对蝙蝠侠 <span class="tag watch">等预售</span> <span class="tag cat">玩具类</span></div>
             <div class="price">
               <div class="now">未定价</div>
