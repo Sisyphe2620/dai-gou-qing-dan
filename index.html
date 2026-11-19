@@ -244,32 +244,50 @@
         border: 1px solid var(--line);
         border-radius: 10px;
         box-shadow: var(--shadow);
-        padding: 10px 14px;
+        padding: 0;
+        overflow: hidden;
         display: grid;
-        grid-template-columns: 44px 1fr auto;
-        gap: 4px 12px;
+        grid-template-columns: 42% 1fr;
+        gap: 0 12px;
         align-items: start;
       }
-      .item .thumb {
+      /* 左侧大图：点一下可拍照或从相册选图换掉 */
+      .item .pic {
         grid-column: 1;
-        grid-row: 1 / span 2;
-        width: 44px;
-        height: 44px;
-        border-radius: 8px;
+        grid-row: 1 / span 4;
+        align-self: start;
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
         background: var(--surface-2);
+        cursor: pointer;
         overflow: hidden;
+        position: relative;
+        display: block;
       }
-      .item .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
-      .item[data-cat="玩具类"] .thumb { background: #e8b64c; }
-      .item[data-cat="工具类"] .thumb { background: #7a9cc6; }
-      .item[data-cat="厨具类"] .thumb { background: #5fae8f; }
-      .item[data-cat="日用品"] .thumb { background: #c98a7a; }
-      .item[data-cat="食物"] .thumb { background: #d97b4f; }
-      .item .name { grid-column: 2; font-size: 15.5px; font-weight: 700; line-height: 1.4; }
-      .item .price { grid-column: 3; }
-      .item .note { grid-column: 2 / -1; grid-row: 2; color: var(--ink-2); font-size: 13px; }
-      .item .meta { grid-column: 1 / -1; grid-row: 3; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
-      .item .price { text-align: right; }
+      .item .pic:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+      .item .pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .item .pic-add {
+        position: absolute;
+        inset: 10px;
+        border: 2px dashed var(--line);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--ink-3);
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .item .name { grid-column: 2; grid-row: 1; padding: 12px 14px 0 0; font-size: 15.5px; font-weight: 700; line-height: 1.4; }
+      .item .price { grid-column: 2; grid-row: 2; padding-right: 14px; margin-top: 2px; text-align: left; }
+      .item .note { grid-column: 2; grid-row: 3; padding-right: 14px; color: var(--ink-2); font-size: 13px; margin: 6px 0; }
+      .item .meta { grid-column: 2; grid-row: 4; padding: 0 14px 12px 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
       .item .price .now { font-family: "Noto Serif SC", serif; font-size: 17px; font-weight: 900; }
       .item .price .was { font-size: 12.5px; color: var(--ink-3); text-decoration: line-through; }
       .tag {
@@ -350,12 +368,6 @@
         .stat .lbl { font-size: 12px; }
         .sec-head { flex-wrap: wrap; gap: 4px 10px; }
         .sec-head .count { margin-left: 0; }
-        .item { grid-template-columns: 40px 1fr; }
-        .item .thumb { width: 40px; height: 40px; grid-row: 1 / span 2; }
-        .item .name { grid-column: 2; }
-        .item .price { grid-column: 2; grid-row: 2; text-align: left; }
-        .item .note { grid-column: 1 / -1; grid-row: 3; }
-        .item .meta { grid-row: 4; }
       }
     </style>
   </head>
@@ -434,7 +446,7 @@
         </div>
         <div class="items">
           <article class="item" data-id="basin" data-place="宜家" data-cat="厨具类">
-            <div class="thumb" aria-hidden="true"></div>
+            <button type="button" class="pic pic-empty" data-pic="basin" aria-label="添加图片"><span class="pic-add"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg><span>待添加</span></span></button>
             <div class="name">金属带孔盆 <span class="tag place">宜家</span> <span class="tag cat">厨具类</span></div>
             <div class="price">
               <div class="now">待定</div>
@@ -457,7 +469,7 @@
         </div>
         <div class="items">
           <article class="item" data-id="stormtrooper-kenner" data-cat="玩具类">
-            <div class="thumb" aria-hidden="true"></div>
+            <button type="button" class="pic" data-pic="stormtrooper-kenner" aria-label="更换图片"><img src="assets/stormtrooper-kenner.jpg" alt="星战 50 周年黑系列 风暴兵 Kenner 复古卡版"></button>
             <div class="name">星战 50 周年黑系列 风暴兵 Kenner 复古卡版 <span class="tag watch">等开订</span> <span class="tag cat">玩具类</span></div>
             <div class="price">
               <div class="now">未定价</div>
@@ -470,7 +482,7 @@
             </div>
           </article>
           <article class="item" data-id="batman-inart" data-cat="玩具类">
-            <div class="thumb" aria-hidden="true"></div>
+            <button type="button" class="pic" data-pic="batman-inart" aria-label="更换图片"><img src="assets/batman-inart.jpg" alt="INART 绝对蝙蝠侠"></button>
             <div class="name">INART 绝对蝙蝠侠 <span class="tag watch">等预售</span> <span class="tag cat">玩具类</span></div>
             <div class="price">
               <div class="now">未定价</div>
@@ -508,6 +520,7 @@
         <div><b>怎么往里加：</b>直接语音告诉我想买什么、急不急、有没有目标价，要去某个地方买的也一并说（比如「去 Costco 买」），我就更新到这张清单上，并标好购买地点。买好了点卡片上的「已购买」，东西会进「已购清单」，7 天内可以恢复，超过 7 天自动删除；已购清单里的「清空」会一次删掉里面的全部东西。</div>
       </div>
     </main>
+    <input type="file" id="picInput" accept="image/*" hidden>
     <script>
       (function () {
         var LS_PURCHASED = 'daigou-purchased-v1';
@@ -564,6 +577,73 @@
         var statUrgent = document.getElementById('statUrgent');
         var statWatch = document.getElementById('statWatch');
         var state = { place: 'all', cat: 'all', group: null };
+
+        /* 商品图片：点图片可拍照或从相册选图换掉，照片缩到 600px 存本机 localStorage */
+        var LS_IMG = 'daigou-img-v1';
+        var picInput = document.getElementById('picInput');
+        var picTarget = null;
+
+        function setPicImage(pic, dataUrl, altText) {
+          pic.classList.remove('pic-empty');
+          pic.setAttribute('aria-label', '更换图片');
+          pic.innerHTML = '';
+          var img = document.createElement('img');
+          img.src = dataUrl;
+          img.alt = altText || '';
+          pic.appendChild(img);
+        }
+        function applyCustomImages() {
+          var imgs = readJSON(LS_IMG, {});
+          Object.keys(imgs).forEach(function (id) {
+            Array.prototype.slice.call(document.querySelectorAll('.pic[data-pic="' + id + '"]')).forEach(function (pic) {
+              if (pic.closest('#purchasedItems')) return; /* 克隆由 renderPurchased 从原卡片重新复制，不用单独设 */
+              setPicImage(pic, imgs[id]);
+            });
+          });
+        }
+        function downscaleImage(dataUrl, cb) {
+          var img = new Image();
+          img.onload = function () {
+            var max = 600, w = img.width, h = img.height;
+            if (w > max || h > max) { var s = Math.min(max / w, max / h); w = Math.round(w * s); h = Math.round(h * s); }
+            var cv = document.createElement('canvas');
+            cv.width = w; cv.height = h;
+            cv.getContext('2d').drawImage(img, 0, 0, w, h);
+            cb(cv.toDataURL('image/jpeg', 0.85));
+          };
+          img.onerror = function () { cb(dataUrl); };
+          img.src = dataUrl;
+        }
+        document.addEventListener('click', function (e) {
+          var t = e.target;
+          if (!t || !t.closest) return;
+          var pic = t.closest('.pic');
+          if (!pic) return;
+          picTarget = pic;
+          if (picInput) picInput.click();
+        });
+        if (picInput) {
+          picInput.addEventListener('change', function () {
+            var file = picInput.files && picInput.files[0];
+            picInput.value = '';
+            if (!file || !picTarget) return;
+            var id = picTarget.getAttribute('data-pic');
+            var reader = new FileReader();
+            reader.onload = function () {
+              downscaleImage(reader.result, function (dataUrl) {
+                var imgs = readJSON(LS_IMG, {});
+                imgs[id] = dataUrl;
+                writeJSON(LS_IMG, imgs);
+                Array.prototype.slice.call(document.querySelectorAll('.pic[data-pic="' + id + '"]')).forEach(function (pic) {
+                  if (pic.closest('#purchasedItems')) return;
+                  setPicImage(pic, dataUrl);
+                });
+                applyFilters();
+              });
+            };
+            reader.readAsDataURL(file);
+          });
+        }
 
         function isPurchased(id) { return Object.prototype.hasOwnProperty.call(store.purchased, id); }
         function isGone(id) { return store.gone.indexOf(id) !== -1; }
@@ -735,6 +815,7 @@
           });
         }
 
+        applyCustomImages();
         applyFilters();
       })();
     </script>
