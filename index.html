@@ -288,6 +288,8 @@
       .item .price { grid-column: 2; grid-row: 2; padding-right: 14px; margin-top: 2px; text-align: left; }
       .item .note { grid-column: 2; grid-row: 3; padding-right: 14px; color: var(--ink-2); font-size: 13px; margin: 6px 0; }
       .item .meta { grid-column: 2; grid-row: 4; padding: 0 14px 12px 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+      .item .meta a { color: var(--ink-2); font-weight: 700; text-decoration: none; }
+      .item .meta a:hover { color: var(--ink); text-decoration: underline; }
       .item .price .now { font-family: "Noto Serif SC", serif; font-size: 17px; font-weight: 900; }
       .item .price .was { font-size: 12.5px; color: var(--ink-3); text-decoration: line-through; }
       .tag {
@@ -381,11 +383,11 @@
 
       <div class="summary" aria-label="清单概览">
         <div class="stat">
-          <div class="num" id="statTotal">3</div>
+          <div class="num" id="statTotal">5</div>
           <div class="lbl">清单总数</div>
         </div>
         <div class="stat urgent">
-          <div class="num" id="statUrgent">1</div>
+          <div class="num" id="statUrgent">3</div>
           <div class="lbl">待购买</div>
         </div>
         <div class="stat watch">
@@ -398,7 +400,7 @@
         <button type="button" class="group-card urgent-card" data-group="urgent">
           <span class="gc-title">待购买</span>
           <span class="gc-desc">近期就要买，别拖</span>
-          <span class="gc-foot"><span class="gc-count">1 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
+          <span class="gc-foot"><span class="gc-count">3 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
         </button>
         <button type="button" class="group-card watch-card" data-group="watch">
           <span class="gc-title">等折扣</span>
@@ -422,6 +424,7 @@
         <span class="flabel">购买地点</span>
         <button type="button" class="chip" data-filter="all" aria-pressed="true">全部</button>
         <button type="button" class="chip" data-filter="宜家" aria-pressed="false">宜家</button>
+        <button type="button" class="chip" data-filter="淘宝" aria-pressed="false">淘宝</button>
       </div>
 
       <div class="filter cat-row" id="catFilter" role="group" aria-label="按物品类型筛选">
@@ -442,7 +445,7 @@
         <div class="sec-head">
           <h2 id="urgent-title">待购买</h2>
           <span class="desc">近期就要买，别拖</span>
-          <span class="count">1 件</span>
+          <span class="count">3 件</span>
         </div>
         <div class="items">
           <article class="item" data-id="basin" data-place="宜家" data-cat="厨具类">
@@ -455,6 +458,32 @@
             <div class="meta">
               <span>购买地点：宜家</span>
               <button type="button" class="buy-btn" data-buy="basin">✓ 已购买</button>
+            </div>
+          </article>
+          <article class="item" data-id="gundam-snake-stand" data-place="淘宝" data-cat="玩具类">
+            <button type="button" class="pic pic-empty" data-pic="gundam-snake-stand" aria-label="添加图片"><span class="pic-add"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg><span>待添加</span></span></button>
+            <div class="name">1/144 蛇骨磁吸底座支架（HG / RG 高达手办造型支架） <span class="tag place">淘宝</span> <span class="tag cat">玩具类</span></div>
+            <div class="price">
+              <div class="now">待定</div>
+            </div>
+            <p class="note">1/144 比例蛇骨磁吸底座，给 HG / RG 高达手办摆造型、凹造型用。</p>
+            <div class="meta">
+              <span>购买地点：淘宝</span>
+              <a href="https://e.tb.cn/h.jndEh1dzYQU36P9?tk=3xEM6UbZsxS" target="_blank" rel="noopener">去淘宝看看 ›</a>
+              <button type="button" class="buy-btn" data-buy="gundam-snake-stand">✓ 已购买</button>
+            </div>
+          </article>
+          <article class="item" data-id="model-grass" data-place="淘宝" data-cat="玩具类">
+            <button type="button" class="pic pic-empty" data-pic="model-grass" aria-label="添加图片"><span class="pic-add"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg><span>待添加</span></span></button>
+            <div class="name">沙盘模型草皮（建筑模型 / 微景观草地造景 DIY 草坪） <span class="tag place">淘宝</span> <span class="tag cat">玩具类</span></div>
+            <div class="price">
+              <div class="now">待定</div>
+            </div>
+            <p class="note">做建筑模型、室外微景观的草地草皮，DIY 手工模型造景用。</p>
+            <div class="meta">
+              <span>购买地点：淘宝</span>
+              <a href="https://e.tb.cn/h.jO0R4uAUsYodsNE?tk=aOyx6UbccXi" target="_blank" rel="noopener">去淘宝看看 ›</a>
+              <button type="button" class="buy-btn" data-buy="model-grass">✓ 已购买</button>
             </div>
           </article>
         </div>
