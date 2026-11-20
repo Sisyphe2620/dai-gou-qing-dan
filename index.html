@@ -8,7 +8,7 @@
     <title>我的代办事项</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
     <style>
       :root {
         --bg: #f4f2ec;
@@ -524,6 +524,44 @@
       .todo-add-btn { background: var(--ruby); border-color: var(--ruby); color: var(--cream); }
       .todo-item.done .todo-check { background: var(--moss); border-color: var(--moss); }
     </style>
+    <style>
+      /* ===== 第三轮：暗色叶背景 + 层叠按钮 + 滑入动效 + 设计字体 ===== */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background: #0B1B38 url('assets/media-generation-bg-dark-leaves-0-9b206511-a153-4ae0-921e-5482a698ac3b.jpg') center top / cover no-repeat;
+        pointer-events: none;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background: linear-gradient(180deg, rgba(9,22,45,.42), rgba(9,22,45,.60) 55%, rgba(9,22,45,.75));
+        pointer-events: none;
+      }
+      .wrap { position: relative; z-index: 1; }
+
+      /* 层叠按钮：每张彩卡身后露出一层对比色，像参考图二那样上下叠着 */
+      .group-card { transition: transform .15s, border-color .15s, box-shadow .15s; }
+      .group-card[data-module="todo"], .group-card[data-group="urgent"] { --layer: #0D244D; }
+      .group-card[data-module="shop"], .group-card[data-group="purchased"] { --layer: #852E47; }
+      .group-card[data-todo-view="today"] { --layer: #4A5A30; }
+      .group-card[data-todo-view="all"], .group-card[data-group="watch"] { --layer: #C2441C; }
+      .group-card { box-shadow: 7px 7px 0 var(--layer, rgba(13,36,77,.28)), var(--shadow); }
+      .group-card:active { transform: translate(4px, 4px); box-shadow: 3px 3px 0 var(--layer, rgba(13,36,77,.28)), var(--shadow); }
+      .group-card.active { box-shadow: 7px 7px 0 var(--layer, rgba(13,36,77,.28)), var(--shadow); outline: 3px solid var(--cream); outline-offset: 3px; }
+
+      /* 页面切换：点的那块颜色先滑上来盖住，再淡出露出下一页 */
+      #pageWipe { position: fixed; inset: 0; z-index: 999; pointer-events: none; background: #0D244D; opacity: 0; transform: translateY(100%); transition: transform .38s cubic-bezier(.32,.72,.35,1), opacity .38s ease; }
+      #pageWipe.on { opacity: 1; transform: translateY(0); }
+      #pageWipe.away { opacity: 0; transform: translateY(-100%); }
+
+      /* 设计字体：标题、卡片名、大数字换青棵黄油体 */
+      .intro h1, .gc-title, .stat .num, .sec-head h2 { font-family: "ZCOOL QingKe HuangYou", "Noto Serif SC", "Noto Sans SC", serif; }
+    </style>
   </head>
   <body>
     <main class="wrap">
@@ -781,6 +819,7 @@
         <div><b>怎么往里加：</b>直接语音告诉我想买什么、急不急、有没有目标价，要去某个地方买的也一并说（比如「去 Costco 买」），我就更新到这张清单上，并标好购买地点。买好了点卡片上的「已购买」，东西会进「已购清单」，7 天内可以恢复，超过 7 天自动删除；已购清单里的「清空」会一次删掉里面的全部东西。</div>
       </div>
     </main>
+    <div id="pageWipe" aria-hidden="true"></div>
     <input type="file" id="picInput" accept="image/*" hidden>
     <script>
       (function () {
@@ -1037,34 +1076,50 @@
             toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
           });
         }
+        var wipe = document.getElementById('pageWipe');
+        function cardColor(el) {
+          if (!el) return '#0D244D';
+          var c = window.getComputedStyle(el).backgroundColor;
+          return c || '#0D244D';
+        }
+        function wipeTo(hideEl, showEl, color, after) {
+          if (!wipe) {
+            hideEl.hidden = true; showEl.hidden = false; window.scrollTo(0, 0);
+            if (after) after();
+            return;
+          }
+          wipe.style.background = color || '#0D244D';
+          wipe.classList.remove('away');
+          wipe.classList.add('on');
+          setTimeout(function () {
+            hideEl.hidden = true;
+            showEl.hidden = false;
+            window.scrollTo(0, 0);
+            if (after) after();
+            wipe.classList.remove('on');
+            wipe.classList.add('away');
+            setTimeout(function () { wipe.classList.remove('away'); }, 420);
+          }, 380);
+        }
         groupCards.forEach(function (card) {
           card.addEventListener('click', function () {
             state.group = card.getAttribute('data-group');
-            shopView.hidden = true;
-            groupView.hidden = false;
-            applyFilters();
-            window.scrollTo(0, 0);
+            wipeTo(shopView, groupView, cardColor(card), applyFilters);
           });
         });
         if (backBtn) {
           backBtn.addEventListener('click', function () {
-            groupView.hidden = true;
-            shopView.hidden = false;
-            window.scrollTo(0, 0);
+            wipeTo(groupView, shopView, '#4A5A30');
           });
         }
         if (shopBackBtn) {
           shopBackBtn.addEventListener('click', function () {
-            shopView.hidden = true;
-            homeView.hidden = false;
-            window.scrollTo(0, 0);
+            wipeTo(shopView, homeView, '#0D244D');
           });
         }
         if (todoBackBtn) {
           todoBackBtn.addEventListener('click', function () {
-            todoView.hidden = true;
-            homeView.hidden = false;
-            window.scrollTo(0, 0);
+            wipeTo(todoView, homeView, '#0D244D');
           });
         }
 
@@ -1188,10 +1243,8 @@
         Array.prototype.slice.call(document.querySelectorAll('[data-module]')).forEach(function (btn) {
           btn.addEventListener('click', function () {
             var m = btn.getAttribute('data-module');
-            homeView.hidden = true;
-            if (m === 'todo') { todoView.hidden = false; renderTodos(); }
-            else { shopView.hidden = false; }
-            window.scrollTo(0, 0);
+            var target = (m === 'todo') ? todoView : shopView;
+            wipeTo(homeView, target, cardColor(btn), function () { if (m === 'todo') renderTodos(); });
           });
         });
         renderTodos();
