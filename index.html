@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
-    <title>代购清单</title>
+    <title>我的代办事项</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet" />
@@ -93,7 +93,7 @@
       .stat.watch .num { color: var(--watch); }
 
       /* ---------- Views & group entry cards ---------- */
-      #homeView[hidden], #groupView[hidden], section[hidden] { display: none; }
+      #homeView[hidden], #groupView[hidden], #todoView[hidden], #shopView[hidden], section[hidden] { display: none; }
       .group-cards {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -371,11 +371,138 @@
         .sec-head { flex-wrap: wrap; gap: 4px 10px; }
         .sec-head .count { margin-left: 0; }
       }
+      /* ---------- 顶层双模块 & 代办 ---------- */
+      .module-cards { grid-template-columns: repeat(2, 1fr); }
+      @media (max-width: 520px) { .module-cards { grid-template-columns: 1fr; } }
+      .group-card.active { border-color: var(--ink); }
+      .todo-add { display: flex; gap: 8px; margin: 4px 0 16px; }
+      .todo-add input {
+        flex: 1; min-width: 0;
+        font: inherit; font-size: 15px;
+        padding: 11px 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .todo-add input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+      .todo-add-btn {
+        font: inherit; font-size: 15px; font-weight: 700;
+        cursor: pointer;
+        background: var(--ink); color: var(--bg);
+        border: 1px solid var(--ink);
+        border-radius: 10px;
+        padding: 11px 18px;
+        white-space: nowrap;
+      }
+      .todo-list { display: grid; gap: 8px; }
+      .todo-item {
+        display: flex; align-items: center; gap: 10px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        padding: 12px 14px;
+      }
+      .todo-item.done .todo-text { text-decoration: line-through; color: var(--ink-3); }
+      .todo-check {
+        flex: none;
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        border: 2px solid var(--ink-3);
+        background: transparent;
+        cursor: pointer;
+        font: inherit; font-size: 15px; line-height: 1;
+        color: var(--bg);
+        display: flex; align-items: center; justify-content: center;
+        padding: 0;
+      }
+      .todo-item.done .todo-check { background: var(--ink); border-color: var(--ink); }
+      .todo-text { flex: 1; min-width: 0; font-size: 15px; line-height: 1.45; word-break: break-word; }
+      .todo-today {
+        flex: none;
+        font: inherit; font-size: 12.5px; font-weight: 700;
+        cursor: pointer;
+        color: var(--ink-3);
+        background: transparent;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 3px 12px;
+        white-space: nowrap;
+      }
+      .todo-today[aria-pressed="true"] { background: var(--gold-soft); color: var(--gold); border-color: var(--gold); }
+      .todo-del {
+        flex: none;
+        font: inherit; font-size: 16px;
+        cursor: pointer;
+        color: var(--ink-3);
+        background: transparent;
+        border: 0;
+        padding: 4px 8px;
+        line-height: 1;
+      }
+      .todo-del:hover { color: var(--urgent); }
     </style>
   </head>
   <body>
     <main class="wrap">
       <div id="homeView">
+      <div class="intro">
+        <h1>我的代办事项</h1>
+        <p>两件事放在一起：<b>代办事项</b>是今天要做的事和全部待办；<b>购物清单</b>是想买还没下单的东西。点下面的模块进去。</p>
+      </div>
+
+      <div class="group-cards module-cards">
+        <button type="button" class="group-card" data-module="todo">
+          <span class="gc-title">代办事项</span>
+          <span class="gc-desc">今天要做的事，和全部待办</span>
+          <span class="gc-foot"><span class="gc-count" id="todoCardCount">0 件待办</span><span class="gc-arrow" aria-hidden="true">›</span></span>
+        </button>
+        <button type="button" class="group-card" data-module="shop">
+          <span class="gc-title">购物清单</span>
+          <span class="gc-desc">想买，还没下单的东西</span>
+          <span class="gc-foot"><span class="gc-count" id="shopCardCount">7 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
+        </button>
+      </div>
+      </div>
+
+      <div id="todoView" hidden>
+      <div class="group-top">
+        <button type="button" class="back-btn" id="todoBackBtn">‹ 返回</button>
+      </div>
+      <div class="intro">
+        <h1>代办事项</h1>
+        <p>下面写一条要做的事，点「今天」就进<b>今天代办</b>。做完了打勾，今天代办里就不再显示；不要了点 × 删掉。</p>
+      </div>
+
+      <div class="group-cards module-cards">
+        <button type="button" class="group-card" data-todo-view="today">
+          <span class="gc-title">今天代办</span>
+          <span class="gc-desc">今天要做的事</span>
+          <span class="gc-foot"><span class="gc-count" id="todoTodayCount">0 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
+        </button>
+        <button type="button" class="group-card" data-todo-view="all">
+          <span class="gc-title">代办清单</span>
+          <span class="gc-desc">全部待办事项</span>
+          <span class="gc-foot"><span class="gc-count" id="todoAllCount">0 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
+        </button>
+      </div>
+
+      <div class="todo-add">
+        <input type="text" id="todoInput" placeholder="写一条要做的事…" aria-label="新的待办事项">
+        <button type="button" class="todo-add-btn" id="todoAddBtn">＋ 添加</button>
+      </div>
+      <div class="todo-list" id="todoList"></div>
+      <div class="empty" id="todoEmpty">
+        <div class="big">还没有待办事项</div>
+        <div class="small">在上面写一条，点「添加」就记下来了。</div>
+      </div>
+      </div>
+
+      <div id="shopView" hidden>
+      <div class="group-top">
+        <button type="button" class="back-btn" id="shopBackBtn">‹ 返回</button>
+      </div>
       <div class="intro">
         <h1>想买，还没下单的</h1>
         <p>这张清单收着所有<b>计划代购、还没买</b>的东西，分成两类：<b>待购买</b>的近期就要买；<b>等折扣</b>的不急，盯着价格，降了再出手。点下面的板块进去，看每一类都有些什么。买好了的点「已购买」，会进「已购清单」，7 天内还能恢复。</p>
@@ -619,8 +746,20 @@
         var catCurrent = document.getElementById('catCurrent');
         var homeView = document.getElementById('homeView');
         var groupView = document.getElementById('groupView');
+        var shopView = document.getElementById('shopView');
+        var todoView = document.getElementById('todoView');
+        var shopBackBtn = document.getElementById('shopBackBtn');
+        var todoBackBtn = document.getElementById('todoBackBtn');
+        var todoInput = document.getElementById('todoInput');
+        var todoAddBtn = document.getElementById('todoAddBtn');
+        var todoList = document.getElementById('todoList');
+        var todoEmpty = document.getElementById('todoEmpty');
+        var todoCardCount = document.getElementById('todoCardCount');
+        var shopCardCount = document.getElementById('shopCardCount');
+        var todoTodayCount = document.getElementById('todoTodayCount');
+        var todoAllCount = document.getElementById('todoAllCount');
         var backBtn = document.getElementById('backBtn');
-        var groupCards = Array.prototype.slice.call(document.querySelectorAll('.group-card'));
+        var groupCards = Array.prototype.slice.call(document.querySelectorAll('.group-card[data-group]'));
         var placeFilter = document.getElementById('placeFilter');
         var catFilter = document.getElementById('catFilter');
         var purchasedItems = document.getElementById('purchasedItems');
@@ -758,6 +897,7 @@
           if (uc) uc.textContent = urgent + ' 件';
           var wc = document.querySelector('.group-card[data-group="watch"] .gc-count');
           if (wc) wc.textContent = watch + ' 件';
+          if (shopCardCount) shopCardCount.textContent = active.length + ' 件';
         }
 
         function applyFilters() {
@@ -819,7 +959,7 @@
         groupCards.forEach(function (card) {
           card.addEventListener('click', function () {
             state.group = card.getAttribute('data-group');
-            homeView.hidden = true;
+            shopView.hidden = true;
             groupView.hidden = false;
             applyFilters();
             window.scrollTo(0, 0);
@@ -828,6 +968,20 @@
         if (backBtn) {
           backBtn.addEventListener('click', function () {
             groupView.hidden = true;
+            shopView.hidden = false;
+            window.scrollTo(0, 0);
+          });
+        }
+        if (shopBackBtn) {
+          shopBackBtn.addEventListener('click', function () {
+            shopView.hidden = true;
+            homeView.hidden = false;
+            window.scrollTo(0, 0);
+          });
+        }
+        if (todoBackBtn) {
+          todoBackBtn.addEventListener('click', function () {
+            todoView.hidden = true;
             homeView.hidden = false;
             window.scrollTo(0, 0);
           });
@@ -867,6 +1021,99 @@
             applyFilters();
           });
         }
+
+        /* ---------- 顶层双模块 & 代办 ---------- */
+        var LS_TODO = 'todo-items-v1';
+        var todos = readJSON(LS_TODO, []);
+        if (!Array.isArray(todos)) todos = [];
+        var todoFilter = 'today';
+        function saveTodos() { writeJSON(LS_TODO, todos); }
+        function todoPending() { return todos.filter(function (t) { return !t.done; }); }
+        function todoTodayPending() { return todos.filter(function (t) { return t.today && !t.done; }); }
+        function renderModuleCounts() {
+          if (todoCardCount) todoCardCount.textContent = todoPending().length + ' 件待办';
+          if (shopCardCount) shopCardCount.textContent = activeItems().length + ' 件';
+          if (todoTodayCount) todoTodayCount.textContent = todoTodayPending().length + ' 件';
+          if (todoAllCount) todoAllCount.textContent = todoPending().length + ' 件';
+        }
+        function renderTodos() {
+          var list = todoFilter === 'today'
+            ? todos.filter(function (t) { return t.today && !t.done; })
+            : todos.slice();
+          if (todoList) {
+            todoList.innerHTML = '';
+            list.forEach(function (t) {
+              var row = document.createElement('div');
+              row.className = 'todo-item' + (t.done ? ' done' : '');
+              var check = document.createElement('button');
+              check.type = 'button';
+              check.className = 'todo-check';
+              check.setAttribute('aria-label', t.done ? '标为未完成' : '标为已完成');
+              check.textContent = t.done ? '✓' : '';
+              check.addEventListener('click', function () {
+                t.done = !t.done;
+                saveTodos(); renderTodos(); renderModuleCounts();
+              });
+              var text = document.createElement('span');
+              text.className = 'todo-text';
+              text.textContent = t.text;
+              var todayBtn = document.createElement('button');
+              todayBtn.type = 'button';
+              todayBtn.className = 'todo-today';
+              todayBtn.setAttribute('aria-pressed', t.today ? 'true' : 'false');
+              todayBtn.textContent = '今天';
+              todayBtn.addEventListener('click', function () {
+                t.today = !t.today;
+                saveTodos(); renderTodos(); renderModuleCounts();
+              });
+              var del = document.createElement('button');
+              del.type = 'button';
+              del.className = 'todo-del';
+              del.setAttribute('aria-label', '删除');
+              del.textContent = '×';
+              del.addEventListener('click', function () {
+                todos = todos.filter(function (x) { return x.id !== t.id; });
+                saveTodos(); renderTodos(); renderModuleCounts();
+              });
+              row.appendChild(check);
+              row.appendChild(text);
+              row.appendChild(todayBtn);
+              row.appendChild(del);
+              todoList.appendChild(row);
+            });
+          }
+          if (todoEmpty) todoEmpty.hidden = list.length !== 0;
+          Array.prototype.slice.call(document.querySelectorAll('[data-todo-view]')).forEach(function (btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-todo-view') === todoFilter);
+          });
+          renderModuleCounts();
+        }
+        function addTodo() {
+          if (!todoInput) return;
+          var v = todoInput.value.replace(/^\s+|\s+$/g, '');
+          if (!v) return;
+          todos.push({ id: Date.now() + '-' + Math.floor(Math.random() * 100000), text: v, done: false, today: todoFilter === 'today', created: Date.now() });
+          todoInput.value = '';
+          saveTodos(); renderTodos();
+        }
+        if (todoAddBtn) todoAddBtn.addEventListener('click', addTodo);
+        if (todoInput) todoInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') addTodo(); });
+        Array.prototype.slice.call(document.querySelectorAll('[data-todo-view]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            todoFilter = btn.getAttribute('data-todo-view');
+            renderTodos();
+          });
+        });
+        Array.prototype.slice.call(document.querySelectorAll('[data-module]')).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var m = btn.getAttribute('data-module');
+            homeView.hidden = true;
+            if (m === 'todo') { todoView.hidden = false; renderTodos(); }
+            else { shopView.hidden = false; }
+            window.scrollTo(0, 0);
+          });
+        });
+        renderTodos();
 
         applyCustomImages();
         applyFilters();
