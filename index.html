@@ -159,6 +159,20 @@ button{font-family:inherit}
   var gone=load(K.gone,[]); if(!Array.isArray(gone))gone=[];
   var imgs=load(K.img,{}); if(!isObj(imgs))imgs={};
 
+  /* 旧版商品 id → 新版 id 映射（2026-11-21 换版时保留已购/换图数据） */
+  (function(){
+    var MAP={'basin':'metal-basin','gundam-snake-stand':'snake-base','model-grass':'sand-grass','gundam-floor-stand':'gundam-stand','black-baseball-cap':'black-cap','stormtrooper-kenner':'stormtrooper','batman-inart':'inart-batman'};
+    var changed=false;
+    Object.keys(MAP).forEach(function(old){
+      var nw=MAP[old];
+      if(old in bought){bought[nw]=bought[old];delete bought[old];changed=true}
+      var gi=gone.indexOf(old);
+      if(gi>=0){gone.splice(gi,1);if(gone.indexOf(nw)<0)gone.push(nw);changed=true}
+      if(old in imgs){imgs[nw]=imgs[old];delete imgs[old];changed=true}
+    });
+    if(changed){save(K.bought,bought);save(K.gone,gone);save(K.img,imgs)}
+  })();
+
   function expire(){
     var now=Date.now(),changed=false;
     Object.keys(bought).forEach(function(id){
