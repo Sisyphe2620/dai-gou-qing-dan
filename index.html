@@ -1,1399 +1,579 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="light dark" />
-    <link rel="icon" href="data:," />
-    <title>我的代办事项</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
-    <style>
-      :root {
-        --bg: #f4f2ec;
-        --surface: #fffdf8;
-        --surface-2: #ece8dd;
-        --ink: #1c1a16;
-        --ink-2: #5c564a;
-        --ink-3: #8d8676;
-        --line: #ddd6c6;
-        --urgent: #c93a22;
-        --urgent-soft: #fbe9e2;
-        --watch: #0f766e;
-        --watch-soft: #e2f1ee;
-        --gold: #b8860b;
-        --gold-soft: #f6edd3;
-        --shadow: 0 1px 2px rgba(28, 26, 22, .05), 0 10px 28px -14px rgba(28, 26, 22, .22);
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的代办事项</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a phone-width column of flat colour bands; the open band unfolds its list like creased paper. */
+:root{
+  --paper:#F8F3EA; --card:#FFFFFF; --ink:#3A2B25; --ink-2:#6F5F55; --line:#E4DAC9; --crease:#EBE0CF;
+  --gold:#F4B13B; --clay:#E0745E; --sand:#F2E6D6; --on-clay:#2A1A15;
+  --display:'Jost','Noto Sans SC',system-ui,sans-serif;
+  --body:'Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#E9DFCE;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;color-scheme:light;-webkit-text-size-adjust:100%}
+.app{max-width:520px;min-height:100%;margin:0 auto;background:var(--paper);box-shadow:0 0 0 1px rgba(58,43,37,.06),0 24px 70px rgba(58,43,37,.14)}
+.app.enter{animation:enter .3s ease-out}
+@keyframes enter{from{opacity:0}to{opacity:1}}
+a{color:inherit}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* hero */
+.hero{padding:18px 20px 28px;display:flex;flex-direction:column;gap:14px}
+.hero h1{margin:0;font-size:30px;line-height:1.25;font-weight:700;letter-spacing:.02em;text-wrap:balance}
+.hero p{margin:0;font-size:15px;line-height:1.75;max-width:34em}
+.hero-sand{background:var(--sand);color:var(--ink)}
+.hero-gold{background:var(--gold);color:var(--ink)}
+.hero-clay{background:var(--clay);color:var(--on-clay)}
+.back{align-self:flex-start;text-decoration:none;font-weight:500;font-size:15px;min-height:44px;display:inline-flex;align-items:center;margin:-6px 0 -2px -8px;padding:0 8px}
+.stamp{display:flex;flex-direction:column;font-family:var(--display);padding-top:6px}
+.stamp small{font-size:13px;letter-spacing:.16em;font-weight:500}
+.stamp b{font-size:76px;line-height:.95;font-weight:300;font-variant-numeric:tabular-nums}
+
+/* bands */
+.band{display:flex;align-items:center;gap:18px;width:100%;min-height:96px;padding:20px;border:0;text-align:left;font:inherit;color:var(--ink);text-decoration:none;cursor:pointer;position:relative}
+.band .num{font-family:var(--display);font-weight:300;font-size:46px;line-height:1;min-width:2ch;font-variant-numeric:tabular-nums}
+.band h2{margin:0;font-size:19px;font-weight:700;letter-spacing:.04em}
+.band p{margin:3px 0 0;font-size:13px;line-height:1.45}
+.band .bar{margin-left:auto;flex:none;height:14px;background:rgba(255,255,255,.62);transition:width .3s}
+.c-gold{background:var(--gold)}
+.c-sand{background:var(--sand);box-shadow:inset 0 1px 0 rgba(58,43,37,.14),inset 0 -1px 0 rgba(58,43,37,.14)}
+.c-sand .bar{background:var(--clay)}
+.c-clay{background:var(--clay);color:var(--on-clay)}
+.c-clay .bar{background:rgba(255,255,255,.55)}
+.fold-band{touch-action:none;user-select:none;-webkit-user-select:none}
+.fold-band::before{content:"";position:absolute;left:50%;bottom:7px;width:44px;height:4px;margin-left:-22px;background:currentColor;opacity:.3;border-radius:2px;transition:opacity .2s}
+.fold-band[aria-expanded="true"]::before{opacity:.55}
+
+/* add box */
+.add{display:flex;gap:10px;padding:14px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.add input{flex:1;min-width:0;height:48px;border:2px solid var(--line);border-radius:0;padding:0 12px;font:inherit;background:var(--paper);color:var(--ink)}
+.add input:focus{outline:none;border-color:var(--ink)}
+.add button{flex:none;height:48px;padding:0 18px;border:0;background:var(--ink);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+
+/* folded list */
+.panel{background:#fff;overflow:hidden}
+.fold{transform-origin:50% 0;backface-visibility:hidden}
+.fold-row{display:flex;align-items:center;gap:4px;min-height:64px;padding:6px 6px 6px 8px;transform-origin:50% 0}
+.fold-row:nth-child(odd){background:linear-gradient(#fff 0%,var(--crease) 100%)}
+.fold-row:nth-child(even){background:linear-gradient(var(--crease) 0%,#fff 100%)}
+.check{flex:none;width:48px;height:48px;border:0;background:none;cursor:pointer;display:grid;place-items:center;padding:0}
+.check i{width:26px;height:26px;border:2px solid var(--ink);border-radius:50%;display:grid;place-items:center;color:transparent;font-style:normal;font-size:14px;font-weight:700}
+.done .check i{background:var(--ink);border-color:var(--ink);color:var(--sand)}
+.t{flex:1;min-width:0;font-size:16px;line-height:1.45;overflow-wrap:anywhere;padding:4px 0}
+.done .t{text-decoration:line-through;color:#8C9A96}
+.today-btn{flex:none;height:34px;padding:0 12px;border:2px solid #D8CCB8;background:#fff;color:var(--ink-2);font-size:13px;font-weight:700;cursor:pointer}
+.today-btn.on{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.del{flex:none;width:44px;height:44px;border:0;background:none;font-size:26px;line-height:1;color:var(--ink-2);cursor:pointer}
+.empty{padding:44px 24px;text-align:center;display:grid;gap:8px;background:#fff}
+.empty strong{font-size:22px;font-weight:700}
+.empty span{font-size:14px;color:var(--ink-2);line-height:1.7}
+
+/* shopping */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-bottom:1px solid var(--line)}
+.stats div{padding:16px 8px;text-align:center;display:grid;gap:2px}
+.stats div+div{border-left:1px solid var(--line)}
+.stats b{font-family:var(--display);font-weight:300;font-size:42px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stats span{font-size:13px;color:var(--ink-2)}
+.filters{padding:14px 16px 12px;background:#fff;border-bottom:1px solid var(--line);display:grid;gap:10px}
+.fl{display:flex;gap:10px;align-items:center;min-width:0}
+.fl .lab{flex:none;font-size:12px;color:var(--ink-2);width:4.2em;line-height:1.3}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 2px 0;min-width:0}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:36px;padding:0 14px;border:2px solid var(--line);background:#fff;font-size:14px;color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.card{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;padding:16px;background:#fff;border-bottom:1px solid var(--line)}
+.card:nth-child(odd){background:linear-gradient(#fff 0%,var(--crease) 100%)}
+.card:nth-child(even){background:linear-gradient(var(--crease) 0%,#fff 100%)}
+.pic{width:104px;aspect-ratio:3/4;border:0;padding:0;background:var(--paper);cursor:pointer;overflow:hidden;align-self:start}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.ph{display:grid;place-items:center;align-content:center;gap:6px;height:100%;color:var(--ink-2);font-size:12px;font-weight:500}
+.info h3{margin:0 0 6px;font-size:16px;line-height:1.4;font-weight:700;overflow-wrap:anywhere}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tag{font-size:12px;font-weight:500;padding:1px 8px;background:var(--paper);color:var(--ink)}
+.tag.place{background:var(--ink);color:#fff}
+.tag.status{background:var(--gold);color:var(--ink)}
+.price{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 6px}
+.note{font-size:13.5px;line-height:1.65;color:var(--ink-2);margin:0 0 8px}
+.meta{display:grid;gap:2px;margin:0 0 10px;font-size:12.5px;line-height:1.5}
+.meta div{display:flex;gap:8px}
+.meta dt{color:var(--ink-2);flex:none}
+.meta dd{margin:0;font-weight:500}
+.link{display:inline-block;margin-bottom:10px;font-weight:700;font-size:14px;text-underline-offset:3px;text-decoration-color:var(--clay);text-decoration-thickness:2px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.act{height:40px;padding:0 16px;border:0;background:var(--gold);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer}
+.act.ghost{background:#fff;border:2px solid var(--clay);color:#9A3F2B}
+.clearbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.nomatch{padding:28px 20px;background:#fff;text-align:center;color:var(--ink-2);font-size:14px}
+.howto{padding:28px 20px 44px;background:var(--sand);color:var(--ink);box-shadow:inset 0 1px 0 rgba(58,43,37,.14);margin-top:0}
+.howto h4{margin:0 0 8px;font-size:15px;letter-spacing:.08em}
+.howto p{margin:0;font-size:14px;line-height:1.85}
+.home-bands{display:grid}
+.sfx{position:fixed;right:max(12px,calc(50% - 248px));bottom:16px;width:44px;height:44px;border:2px solid var(--ink);background:var(--card);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0;z-index:9}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:min(440px,calc(100% - 32px));background:var(--ink);color:#fff;padding:12px 16px;font-size:14px;line-height:1.5;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .app.enter{animation:none}
+  .band .bar,.toast{transition:none}
+}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<input type="file" id="imgInput" accept="image/*" hidden>
+<button type="button" id="sfxBtn" class="sfx"></button>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var DAY=86400000;
+  var HOWTO='直接语音告诉我想买什么、急不急、有没有目标价，要去某个地方买的也一并说（比如「去 Costco 买」），我就更新到这张清单上，并标好购买地点。买好了点卡片上的「已购买」，东西会进「已购清单」，7 天内可以恢复，超过 7 天自动删除；已购清单里的「清空」会一次删掉里面的全部东西。';
+
+  var ITEMS=[
+    {id:'metal-basin',cat:'buy',name:'金属带孔盆',place:'宜家',type:'厨具类',price:'待定',note:'去宜家买，具体款式和价格到店再定。'},
+    {id:'snake-base',cat:'buy',name:'1/144 蛇骨磁吸底座支架（HG / RG 高达手办造型支架）',place:'淘宝',type:'玩具类',price:'待定',note:'1/144 比例蛇骨磁吸底座，给 HG / RG 高达手办摆造型、凹造型用。',link:'https://e.tb.cn/h.jndEh1dzYQU36P9?tk=3xEM6UbZsxS'},
+    {id:'sand-grass',cat:'buy',name:'沙盘模型草皮（建筑模型 / 微景观草地造景 DIY 草坪）',place:'淘宝',type:'玩具类',price:'待定',note:'做建筑模型、室外微景观的草地草皮，DIY 手工模型造景用。',link:'https://e.tb.cn/h.jO0R4uAUsYodsNE?tk=aOyx6UbccXi'},
+    {id:'gundam-stand',cat:'buy',name:'高达落地支架',place:'淘宝',type:'玩具类',price:'待定',note:'高达模型落地展示支架。'},
+    {id:'black-cap',cat:'buy',name:'黑色棒球帽',type:'日用品',price:'待定',note:'Boxing Day（12 月 26 日）买一顶黑色棒球帽，款式和价格到时再定。',when:'Boxing Day'},
+    {id:'stormtrooper',cat:'wait',name:'星战 50 周年黑系列 风暴兵 Kenner 复古卡版',type:'玩具类',price:'未定价',status:'等开订',next:'2026-11-23',img:'assets/stormtrooper-kenner.jpg',note:'还没开预购，预计 2027 年才上架（美国 Target / Walmart / Disney Store，海外走 Fan Channel）。普通金卡版已开预购，29.99 美元，2027 年春季发售。'},
+    {id:'inart-batman',cat:'wait',name:'INART 绝对蝙蝠侠',type:'玩具类',price:'未定价',status:'等预售',next:'约 2026-12-05',img:'assets/batman-inart.jpg',note:'原型已于 2026 年 10 月 3–4 日在上海 Wonder Festival 展出，暂无官宣、无售价、无淘宝预售。'}
+  ];
+  var PLACES=['宜家','淘宝'];
+  var TYPES=['玩具类','工具类','厨具类','日用品','食物'];
+
+  /* ---------- storage ---------- */
+  var K={todo:'todo-items-v1',bought:'daigou-purchased-v1',gone:'daigou-gone-v1',img:'daigou-img-v1'};
+  function load(k,fb){try{var r=localStorage.getItem(k);if(r!==null)return JSON.parse(r)}catch(e){}return fb}
+  function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+  function isObj(v){return v&&typeof v==='object'&&!Array.isArray(v)}
+  var todos=load(K.todo,[]); if(!Array.isArray(todos))todos=[];
+  var bought=load(K.bought,{}); if(!isObj(bought))bought={};
+  var gone=load(K.gone,[]); if(!Array.isArray(gone))gone=[];
+  var imgs=load(K.img,{}); if(!isObj(imgs))imgs={};
+
+  function expire(){
+    var now=Date.now(),changed=false;
+    Object.keys(bought).forEach(function(id){
+      if(now-bought[id]>7*DAY){ if(gone.indexOf(id)<0)gone.push(id); delete bought[id]; changed=true; }
+    });
+    if(changed){save(K.bought,bought);save(K.gone,gone)}
+  }
+  expire();
+
+  /* ---------- helpers ---------- */
+  var ui={place:'all',type:'all'};
+  var isOpen={today:false,all:true,'sec-buy':true,'sec-wait':true,'sec-done':true};
+  var prog={},raf={};
+  var pendingFocus=null,pendingImg=null;
+  var $app=document.getElementById('app');
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function pad(n){return String(n).padStart(2,'0')}
+  function barW(n){return 6+Math.min(n,12)*6}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+  function isGone(id){return gone.indexOf(id)>=0}
+  function activeItems(){return ITEMS.filter(function(i){return !(i.id in bought)&&!isGone(i.id)})}
+  function boughtItems(){return ITEMS.filter(function(i){return (i.id in bought)&&!isGone(i.id)})}
+  function matches(i){return (ui.place==='all'||i.place===ui.place)&&(ui.type==='all'||i.type===ui.type)}
+  var toastTimer;
+  function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show')},3600)}
+
+  function bandHtml(o){
+    var tag=o.href?'a':(o.button?'button':'div');
+    var attrs=' class="band c-'+o.color+'"';
+    if(o.href)attrs+=' href="'+o.href+'"';
+    if(o.button)attrs+=' type="button"';
+    if(o.fold){attrs=attrs.replace('class="band','class="band fold-band')+' data-fold="'+o.fold+'" aria-expanded="'+(!!isOpen[o.fold])+'"'}
+    if(o.attrs)attrs+=' '+o.attrs;
+    return '<'+tag+attrs+'><span class="num">'+pad(o.n)+'</span><span class="txt"><h2>'+o.title+'</h2><p>'+o.desc+'</p></span><i class="bar" style="width:'+barW(o.n)+'px"></i></'+tag+'>';
+  }
+  function back(href,label){return '<a class="back" href="'+href+'">‹ '+label+'</a>'}
+
+  /* ---------- sound (synthesised, no files) ---------- */
+  var sfxOn=load('sfx-v1',true)!==false,AC=null,master=null,nbuf=null;
+  function ac(){
+    if(AC===false)return null;
+    if(!AC){try{var C=window.AudioContext||window.webkitAudioContext;AC=new C();master=AC.createGain();master.gain.value=.22;master.connect(AC.destination)}catch(e){AC=false;return null}}
+    if(AC.state==='suspended'){try{AC.resume()}catch(e){}}
+    return AC;
+  }
+  function tone(f,t0,dur,type,vol,f2){
+    var a=sfxOn&&ac(); if(!a)return;
+    var o=a.createOscillator(),g=a.createGain(),t=a.currentTime+(t0||0);
+    o.type=type||'sine'; o.frequency.setValueAtTime(f,t);
+    if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol||.4,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+.03);
+  }
+  function noise(t0,dur,f1,f2,vol,q){
+    var a=sfxOn&&ac(); if(!a)return;
+    if(!nbuf){nbuf=a.createBuffer(1,a.sampleRate,a.sampleRate);var d=nbuf.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+    var s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(t0||0);
+    s.buffer=nbuf; s.loop=true; f.type='bandpass'; f.Q.value=q||1;
+    f.frequency.setValueAtTime(f1,t); f.frequency.exponentialRampToValueAtTime(f2,t+dur);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+Math.min(.03,dur/3)); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+dur+.03);
+  }
+  var SFX={
+    pop:function(){tone(420,0,.14,'sine',.5,840)},
+    done:function(){tone(660,0,.14,'triangle',.45);tone(990,.08,.24,'triangle',.4)},
+    undo:function(){tone(520,0,.12,'triangle',.35,380)},
+    tick:function(){tone(1400,0,.035,'square',.1)},
+    nav:function(){tone(500,0,.07,'sine',.28,640)},
+    paper:function(){noise(0,.05,2600,1200,.3,2)},
+    del:function(){noise(0,.18,2400,500,.5,1.2);tone(260,0,.12,'sine',.25,140)},
+    buy:function(){tone(784,0,.12,'triangle',.4);tone(1047,.09,.12,'triangle',.4);tone(1568,.18,.32,'triangle',.35)},
+    restore:function(){tone(1047,0,.1,'triangle',.35);tone(698,.08,.2,'triangle',.35)},
+    clear:function(){noise(0,.42,3000,300,.6,.8)},
+    shutter:function(){noise(0,.05,4000,2000,.6,1);noise(.08,.06,3000,1500,.5,1)},
+    unfold:function(d){noise(0,d,500,3200,.45,.9)},
+    fold:function(d){noise(0,d,3200,500,.45,.9)}
+  };
+  function sfx(n,a){if(sfxOn&&SFX[n])SFX[n](a)}
+  document.addEventListener('pointerdown',function(){if(sfxOn)ac()},{passive:true});
+  var sfxBtn=document.getElementById('sfxBtn');
+  function paintSfx(){
+    sfxBtn.setAttribute('aria-pressed',sfxOn?'true':'false');
+    sfxBtn.setAttribute('aria-label',sfxOn?'音效：开':'音效：关');
+    sfxBtn.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>'+(sfxOn?'<path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>':'<path d="M16 9.5l5 5M21 9.5l-5 5"/>')+'</svg>';
+  }
+  sfxBtn.addEventListener('click',function(){sfxOn=!sfxOn;save('sfx-v1',sfxOn);paintSfx();if(sfxOn)sfx('pop')});
+  paintSfx();
+
+  /* ---------- views ---------- */
+  function viewHome(){
+    var d=new Date(),wk='日一二三四五六'.charAt(d.getDay());
+    var todoN=todos.filter(function(t){return !t.done}).length;
+    var shopN=activeItems().length;
+    return '<header class="hero hero-sand"><div class="stamp"><small>'+(d.getMonth()+1)+' 月 · 周'+wk+'</small><b>'+pad(d.getDate())+'</b></div>'+
+      '<h1>我的代办事项</h1>'+
+      '<p>两件事放在一起：代办事项是今天要做的事和全部待办；购物清单是想买还没下单的东西。点下面的模块进去。</p></header>'+
+      '<main class="home-bands">'+
+      bandHtml({href:'#todo',color:'gold',n:todoN,title:'代办事项',desc:'今天要做的事，和全部待办'})+
+      bandHtml({href:'#shop',color:'clay',n:shopN,title:'购物清单',desc:'想买，还没下单的东西'})+
+      '</main>';
+  }
+
+  function viewTodo(){
+    return '<header class="hero hero-gold">'+back('#home','首页')+'<h1>代办事项</h1>'+
+      '<p>下面写一条要做的事，点「今天」就进今天代办。做完了打勾，今天代办里就不再显示；不要了点 × 删掉。</p></header>'+
+      '<form class="add" id="addForm" autocomplete="off"><label class="sr" for="newTodo">新的待办</label>'+
+      '<input id="newTodo" type="text" placeholder="写一条要做的事…" maxlength="200"><button type="submit">＋ 添加</button></form>'+
+      '<div id="todoLists"></div>';
+  }
+
+  function rowHtml(t,i){
+    return '<li class="fold fold-row'+(t.done?' done':'')+'" style="--i:'+i+'" data-id="'+esc(t.id)+'">'+
+      '<button type="button" class="check" data-act="toggle" aria-pressed="'+(t.done?'true':'false')+'" aria-label="'+(t.done?'取消完成：':'标记完成：')+esc(t.text)+'"><i>✓</i></button>'+
+      '<span class="t">'+esc(t.text)+'</span>'+
+      '<button type="button" class="today-btn'+(t.today?' on':'')+'" data-act="today" aria-pressed="'+(t.today?'true':'false')+'">今天</button>'+
+      '<button type="button" class="del" data-act="del" aria-label="删除：'+esc(t.text)+'">×</button></li>';
+  }
+
+  function updateTodo(){
+    var host=document.getElementById('todoLists'); if(!host)return;
+    var undone=todos.filter(function(t){return !t.done});
+    var todayList=todos.filter(function(t){return t.today&&!t.done});
+    var allList=undone.concat(todos.filter(function(t){return t.done}));
+    function panel(key,list){
+      if(!todos.length){
+        return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><strong>还没有待办事项</strong><span>在上面写一条，点「添加」就记下来了。</span></div></div>';
       }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #16150f;
-          --surface: #201e17;
-          --surface-2: #2a271e;
-          --ink: #f0ead9;
-          --ink-2: #bdb49e;
-          --ink-3: #8a8271;
-          --line: #38342a;
-          --urgent: #ff7a5c;
-          --urgent-soft: #3a2019;
-          --watch: #4cc9b8;
-          --watch-soft: #14302c;
-          --gold: #d9a441;
-          --gold-soft: #3a3020;
-          --shadow: 0 1px 2px rgba(0,0,0,.35), 0 12px 30px -16px rgba(0,0,0,.7);
-        }
+      if(!list.length){
+        return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><span>今天代办里还没有事。在代办清单里点某一条的「今天」，就会放进来。</span></div></div>';
       }
-      * { box-sizing: border-box; }
-      html { -webkit-text-size-adjust: 100%; }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-        line-height: 1.6;
-      }
-      .wrap { max-width: 880px; margin: 0 auto; padding: 28px 18px 56px; }
+      return '<ul class="panel" data-panel="'+key+'" style="list-style:none;margin:0;padding:0">'+list.map(rowHtml).join('')+'</ul>';
+    }
+    host.innerHTML=
+      bandHtml({button:true,color:'gold',n:todayList.length,title:'今天代办',desc:'今天要做的事',fold:'today'})+panel('today',todayList)+
+      bandHtml({button:true,color:'clay',n:undone.length,title:'代办清单',desc:'全部待办事项',fold:'all'})+panel('all',allList);
+    applyFolds();
+  }
 
-      /* ---------- Intro ---------- */
-      .intro { padding: 10px 2px 22px; }
-      .intro h1 {
-        font-family: "Noto Serif SC", "Noto Sans SC", serif;
-        font-size: clamp(30px, 6vw, 44px);
-        font-weight: 900;
-        letter-spacing: .02em;
-        margin: 0 0 8px;
-        line-height: 1.2;
-      }
-      .intro p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 34em; }
-      .intro p b { color: var(--ink); font-weight: 700; }
+  /* ---------- fold engine: panels unfold row by row like creased paper ---------- */
+  function measure(panel){
+    var items=Array.prototype.slice.call(panel.children);
+    var prev=panel.style.display; panel.style.display='block';
+    items.forEach(function(el){el.style.transform='';el.style.marginBottom='';el.style.filter=''});
+    items.forEach(function(el){el._h=el.offsetHeight});
+    panel.style.display=prev;
+    return items;
+  }
+  function setFold(panel,p){
+    var items=panel.children,n=items.length;
+    if(p<=0.001||!n){panel.style.display='none';return}
+    panel.style.display='block';
+    for(var i=0;i<n;i++){
+      var el=items[i],h=el._h||0;
+      if(p>=0.999){el.style.transform='';el.style.marginBottom='';el.style.filter='';continue}
+      var q=Math.max(0,Math.min(1,p*(n+1)-i));
+      var a=(1-q)*88,cos=Math.cos(a*Math.PI/180);
+      el.style.transform='perspective(700px) rotateX('+(-a)+'deg)';
+      el.style.marginBottom=(-h*(1-cos))+'px';
+      el.style.filter=q>=1?'':'brightness('+(1-.16*(1-q))+')';
+    }
+  }
+  function panelEl(key){return document.querySelector('[data-panel="'+key+'"]')}
+  function syncBand(key){var b=document.querySelector('[data-fold="'+key+'"]');if(b)b.setAttribute('aria-expanded',isOpen[key]?'true':'false')}
+  function applyFolds(){
+    var list=document.querySelectorAll('[data-panel]');
+    for(var i=0;i<list.length;i++){
+      var key=list[i].getAttribute('data-panel');
+      if(!(key in prog))prog[key]=isOpen[key]?1:0;
+      measure(list[i]); setFold(list[i],prog[key]);
+    }
+  }
+  function animateTo(key,target,dur){
+    cancelAnimationFrame(raf[key]);
+    var panel=panelEl(key); if(!panel)return;
+    measure(panel);
+    var from=prog[key]||0;
+    isOpen[key]=target>0.5; syncBand(key);
+    var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce||from===target){prog[key]=target;setFold(panel,target);return}
+    if(Math.abs(target-from)>.05)sfx(target>from?'unfold':'fold',Math.max(.22,Math.abs(target-from)*.56));
+    var d=dur||Math.max(220,Math.abs(target-from)*560),t0=null;
+    function step(now){
+      if(t0===null)t0=now;
+      var k=Math.min(1,(now-t0)/d),e=1-Math.pow(1-k,3);
+      prog[key]=from+(target-from)*e;
+      var pn=panelEl(key); if(!pn)return;
+      setFold(pn,prog[key]);
+      if(k<1)raf[key]=requestAnimationFrame(step);
+    }
+    raf[key]=requestAnimationFrame(step);
+  }
+  var drag=null;
+  $app.addEventListener('pointerdown',function(e){
+    var band=e.target.closest('.fold-band'); if(!band)return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    var key=band.getAttribute('data-fold'),panel=panelEl(key); if(!panel)return;
+    cancelAnimationFrame(raf[key]);
+    var items=measure(panel),H=0;
+    items.forEach(function(el){H+=el._h||0});
+    var now=performance.now();
+    drag={key:key,y0:e.clientY,p0:prog[key]||0,D:Math.max(140,Math.min(H,320)),moved:false,last:e.clientY,lastT:now,v:0,id:e.pointerId};
+    setFold(panel,prog[key]||0);
+    try{band.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  $app.addEventListener('pointermove',function(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    var dy=e.clientY-drag.y0;
+    if(!drag.moved&&Math.abs(dy)<6)return;
+    drag.moved=true;
+    var p=Math.max(0,Math.min(1,drag.p0+dy/drag.D));
+    prog[drag.key]=p;
+    var pn=panelEl(drag.key); if(pn){setFold(pn,p);var kk=Math.floor(p*(pn.children.length+1));if(kk!==drag.k){drag.k=kk;sfx('paper')}}
+    var now=performance.now(),dt=now-drag.lastT;
+    if(dt>0){drag.v=(e.clientY-drag.last)/dt;drag.last=e.clientY;drag.lastT=now}
+  });
+  function endDrag(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    var d=drag; drag=null;
+    var target;
+    if(!d.moved)target=d.p0>0.5?0:1;
+    else if(Math.abs(d.v)>0.35)target=d.v>0?1:0;
+    else target=(prog[d.key]||0)>0.5?1:0;
+    animateTo(d.key,target);
+  }
+  $app.addEventListener('pointerup',endDrag);
+  $app.addEventListener('pointercancel',endDrag);
 
-      /* ---------- Summary strip ---------- */
-      .summary {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin: 4px 0 30px;
-      }
-      .stat {
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 14px 16px 12px;
-        box-shadow: var(--shadow);
-      }
-      .stat .num {
-        font-family: "Noto Serif SC", serif;
-        font-size: 30px;
-        font-weight: 900;
-        line-height: 1.1;
-      }
-      .stat .lbl { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
-      .stat.urgent .num { color: var(--urgent); }
-      .stat.watch .num { color: var(--watch); }
+  function viewShop(){
+    var a=activeItems();
+    var buyN=a.filter(function(i){return i.cat==='buy'}).length;
+    var waitN=a.filter(function(i){return i.cat==='wait'}).length;
+    var doneN=boughtItems().length;
+    return '<header class="hero hero-sand">'+back('#home','首页')+'<h1>想买，还没下单的</h1>'+
+      '<p>这张清单收着所有计划代购、还没买的东西，分成两类：待购买的近期就要买；等折扣的不急，盯着价格，降了再出手。点下面的板块进去，看每一类都有些什么。买好了的点「已购买」，会进「已购清单」，7 天内还能恢复。</p></header>'+
+      '<div class="stats"><div><b>'+pad(a.length)+'</b><span>清单总数</span></div><div><b>'+pad(buyN)+'</b><span>待购买</span></div><div><b>'+pad(waitN)+'</b><span>等折扣</span></div></div>'+
+      '<main>'+
+      bandHtml({href:'#shop-list',color:'clay',n:buyN,title:'待购买',desc:'近期就要买，别拖',attrs:'data-focus="buy"'})+
+      bandHtml({href:'#shop-list',color:'gold',n:waitN,title:'等折扣',desc:'先观望，等降价或有活动再买',attrs:'data-focus="wait"'})+
+      bandHtml({href:'#shop-list',color:'sand',n:doneN,title:'已购清单',desc:'买好了的都在这里，7 天内可恢复',attrs:'data-focus="done"'})+
+      '</main>'+howto();
+  }
+  function howto(){return '<footer class="howto"><h4>怎么往里加</h4><p>'+esc(HOWTO)+'</p></footer>'}
 
-      /* ---------- Views & group entry cards ---------- */
-      #homeView[hidden], #groupView[hidden], #todoView[hidden], #shopView[hidden], section[hidden] { display: none; }
-      .group-cards {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-bottom: 30px;
-      }
-      .group-card {
-        font: inherit;
-        text-align: left;
-        cursor: pointer;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        box-shadow: var(--shadow);
-        padding: 24px 20px 18px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        color: var(--ink);
-        transition: transform .15s, border-color .15s;
-      }
-      .group-card:hover { transform: translateY(-2px); border-color: var(--ink-3); }
-      .group-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-      .gc-title {
-        font-family: "Noto Serif SC", serif;
-        font-size: 28px;
-        font-weight: 900;
-        line-height: 1.2;
-      }
-      .urgent-card .gc-title { color: var(--urgent); }
-      .watch-card .gc-title { color: var(--watch); }
-      .gc-desc { font-size: 14px; color: var(--ink-2); }
-      .gc-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
-      .gc-count { font-size: 13.5px; font-weight: 700; color: var(--ink-3); }
-      .gc-arrow { font-size: 26px; line-height: 1; color: var(--ink-3); }
-      @media (max-width: 520px) {
-        .group-cards { grid-template-columns: 1fr; }
-        .gc-title { font-size: 24px; }
-      }
+  function chipsHtml(group,all,list,cur){
+    var h='<button type="button" class="chip" data-act="chip" data-group="'+group+'" data-val="all" aria-pressed="'+(cur==='all')+'">'+all+'</button>';
+    list.forEach(function(v){h+='<button type="button" class="chip" data-act="chip" data-group="'+group+'" data-val="'+v+'" aria-pressed="'+(cur===v)+'">'+v+'</button>'});
+    return h;
+  }
 
-      /* ---------- Group view top bar ---------- */
-      .group-top { margin-bottom: 22px; }
-      .back-btn {
-        font: inherit;
-        font-size: 14.5px;
-        font-weight: 700;
-        cursor: pointer;
-        color: var(--ink);
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 7px 18px 7px 14px;
-        box-shadow: var(--shadow);
-      }
-      .back-btn:hover { border-color: var(--ink-3); }
-      .back-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  function viewShopList(){
+    return '<header class="hero hero-sand">'+back('#shop','购物清单')+'<h1>想买，还没下单的</h1></header>'+
+      '<div class="filters"><div class="fl"><span class="lab">购买地点</span><div class="chips" role="group" aria-label="按购买地点筛选">'+chipsHtml('place','全部',PLACES,ui.place)+'</div></div>'+
+      '<div class="fl"><span class="lab">物品类型</span><div class="chips" role="group" aria-label="按物品类型筛选">'+chipsHtml('type','全部类型',TYPES,ui.type)+'</div></div></div>'+
+      '<main id="shopLists"></main>'+howto();
+  }
 
-      /* ---------- Place filter ---------- */
-      .filter {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: -6px 0 30px;
-      }
-      .filter .flabel { font-size: 13.5px; font-weight: 700; color: var(--ink-2); margin-right: 2px; }
-      .chip {
-        font: inherit;
-        font-size: 13.5px;
-        font-weight: 500;
-        color: var(--ink-2);
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 6px 16px;
-        cursor: pointer;
-        line-height: 1.5;
-        transition: background .15s, color .15s, border-color .15s;
-      }
-      .chip:hover { border-color: var(--ink-3); color: var(--ink); }
-      .chip[aria-pressed="true"] {
-        background: var(--ink);
-        border-color: var(--ink);
-        color: var(--bg);
-        font-weight: 700;
-      }
-      .chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-      .tag.place { background: var(--surface-2); color: var(--ink-2); }
-      .tag.cat { background: var(--gold-soft); color: var(--gold); }
+  function cardHtml(i,ts){
+    var img=imgs[i.id]||i.img;
+    var pic=img?'<img src="'+img+'" alt="'+esc(i.name)+'">':
+      '<span class="ph"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg><b>待添加</b></span>';
+    var tags='';
+    if(i.place)tags+='<span class="tag place">'+i.place+'</span>';
+    if(i.type)tags+='<span class="tag">'+i.type+'</span>';
+    if(i.status)tags+='<span class="tag status">'+i.status+'</span>';
+    var meta='';
+    if(i.place)meta+='<div><dt>购买地点</dt><dd>'+i.place+'</dd></div>';
+    if(i.when)meta+='<div><dt>购买时间</dt><dd>'+esc(i.when)+'</dd></div>';
+    if(i.status)meta+='<div><dt>状态</dt><dd>'+i.status+'</dd></div>';
+    if(i.next)meta+='<div><dt>下次检查</dt><dd>'+i.next+'</dd></div>';
+    var acts;
+    if(ts){
+      var left=Math.max(0,Math.ceil((ts+7*DAY-Date.now())/DAY));
+      meta+='<div><dt>已购买</dt><dd>还剩 '+left+' 天可恢复</dd></div>';
+      acts='<button type="button" class="act" data-act="restore">恢复</button>';
+    }else{
+      acts='<button type="button" class="act" data-act="buy">✓ 已购买</button>';
+    }
+    return '<article class="card fold" data-id="'+i.id+'">'+
+      '<button type="button" class="pic" data-act="pic" aria-label="'+(img?'更换':'添加')+'图片：'+esc(i.name)+'">'+pic+'</button>'+
+      '<div class="info"><h3>'+esc(i.name)+'</h3><div class="tags">'+tags+'</div>'+
+      '<p class="price">'+i.price+'</p><p class="note">'+esc(i.note)+'</p>'+
+      (meta?'<dl class="meta">'+meta+'</dl>':'')+
+      (i.link?'<a class="link" href="'+i.link+'" target="_blank" rel="noopener">去淘宝看看 ›</a><br>':'')+
+      '<div class="acts">'+acts+'</div></div></article>';
+  }
 
-      /* ---------- Category filter ---------- */
-      .cat-row { margin-top: -18px; }
-      .cat-toggle .caret { display: inline-block; margin-left: 5px; font-size: 11px; transition: transform .15s; }
-      .cat-toggle[aria-expanded="true"] .caret { transform: rotate(180deg); }
-      .cat-panel {
-        flex-basis: 100%;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 12px;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        box-shadow: var(--shadow);
-      }
-      .cat-panel[hidden] { display: none; }
-      .item[hidden], .filter-none[hidden], .filter[hidden], .empty[hidden] { display: none; }
-      .filter-none {
-        border: 1.5px dashed var(--line);
-        border-radius: 10px;
-        padding: 18px;
-        text-align: center;
-        color: var(--ink-3);
-        font-size: 13.5px;
-      }
+  function renderShopLists(){
+    var host=document.getElementById('shopLists'); if(!host)return;
+    expire();
+    var act=activeItems().filter(matches);
+    var buy=act.filter(function(i){return i.cat==='buy'});
+    var wait=act.filter(function(i){return i.cat==='wait'});
+    var allBought=boughtItems();
+    var done=allBought.filter(matches).sort(function(a,b){return bought[b.id]-bought[a.id]});
+    var nomatch='<div class="nomatch fold">这一栏没有符合当前筛选的商品。</div>';
+    function sec(key,color,title,desc,list,inner){
+      return '<section class="sec" id="sec-'+key+'">'+bandHtml({button:true,fold:'sec-'+key,color:color,n:list.length,title:title,desc:desc})+'<div class="panel" data-panel="sec-'+key+'">'+inner+'</div></section>';
+    }
+    var doneInner;
+    if(!allBought.length){
+      doneInner='<div class="empty fold"><strong>已购清单还是空的</strong><span>买好了的东西点「已购买」，就会出现在这里。</span></div>';
+    }else{
+      doneInner='<div class="clearbar fold"><span>已购清单共 '+allBought.length+' 件</span><button type="button" class="act ghost" data-act="clear">清空已购清单</button></div>'+
+        (done.length?done.map(function(i){return cardHtml(i,bought[i.id])}).join(''):nomatch);
+    }
+    host.innerHTML=
+      sec('buy','clay','待购买','近期就要买，别拖',buy,buy.length?buy.map(function(i){return cardHtml(i)}).join(''):nomatch)+
+      sec('wait','gold','等折扣','先观望，等降价或有活动再买',wait,wait.length?wait.map(function(i){return cardHtml(i)}).join(''):nomatch)+
+      sec('done','sand','已购清单','7 天内可恢复，过期自动删除',done,doneInner);
+    applyFolds();
+  }
 
-      /* ---------- Sections ---------- */
-      section { margin-bottom: 34px; }
-      .sec-head {
-        display: flex;
-        align-items: baseline;
-        gap: 12px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid var(--ink);
-        margin-bottom: 16px;
-      }
-      section.watch-sec .sec-head { border-bottom-color: var(--watch); }
-      section.urgent-sec .sec-head { border-bottom-color: var(--urgent); }
-      .sec-head h2 {
-        font-family: "Noto Serif SC", serif;
-        font-size: 22px;
-        font-weight: 900;
-        margin: 0;
-        letter-spacing: .02em;
-      }
-      .sec-head .desc { color: var(--ink-2); font-size: 13.5px; }
-      .sec-head .count {
-        margin-left: auto;
-        font-size: 13px;
-        color: var(--ink-3);
-        white-space: nowrap;
-      }
+  /* ---------- router ---------- */
+  function route(){
+    var r=(location.hash||'#home').slice(1);
+    var name=['home','todo','shop','shop-list'].indexOf(r)>=0?r:'home';
+    expire();
+    var html=name==='home'?viewHome():name==='todo'?viewTodo():name==='shop'?viewShop():viewShopList();
+    var tn=0;
+    prog={};
+    if(name==='todo'){
+      tn=todos.filter(function(t){return t.today&&!t.done}).length;
+      isOpen.today=tn>0; isOpen.all=tn===0;
+    }
+    if(name==='shop-list'){isOpen['sec-buy']=isOpen['sec-wait']=isOpen['sec-done']=true}
+    $app.className='app enter';
+    $app.innerHTML=html;
+    if(name==='todo'){
+      var first=isOpen.today?'today':'all';
+      prog.today=0;prog.all=0;
+      updateTodo();
+      setTimeout(function(){animateTo(first,1,600)},120);
+    }
+    if(name==='shop-list')renderShopLists();
+    window.scrollTo(0,0);
+    if(name==='shop-list'&&pendingFocus){
+      var el=document.getElementById('sec-'+pendingFocus);
+      if(el)el.scrollIntoView({block:'start'});
+    }
+    pendingFocus=null;
+  }
+  window.addEventListener('hashchange',route);
 
-      /* ---------- Item cards (used once items are added) ---------- */
-      .items { display: grid; gap: 8px; }
-      .item {
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        box-shadow: var(--shadow);
-        padding: 0;
-        overflow: hidden;
-        display: grid;
-        grid-template-columns: 42% 1fr;
-        gap: 0 12px;
-        align-items: start;
-      }
-      /* 左侧大图：点一下可拍照或从相册选图换掉 */
-      .item .pic {
-        grid-column: 1;
-        grid-row: 1 / span 4;
-        align-self: start;
-        width: 100%;
-        aspect-ratio: 3 / 4;
-        margin: 0;
-        padding: 0;
-        border: 0;
-        border-radius: 0;
-        background: var(--surface-2);
-        cursor: pointer;
-        overflow: hidden;
-        position: relative;
-        display: block;
-      }
-      .item .pic:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
-      .item .pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
-      .item .pic-add {
-        position: absolute;
-        inset: 10px;
-        border: 2px dashed var(--line);
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        color: var(--ink-3);
-        font-size: 13px;
-        font-weight: 700;
-      }
-      .item .name { grid-column: 2; grid-row: 1; padding: 12px 14px 0 0; font-size: 15.5px; font-weight: 700; line-height: 1.4; }
-      .item .price { grid-column: 2; grid-row: 2; padding-right: 14px; margin-top: 2px; text-align: left; }
-      .item .note { grid-column: 2; grid-row: 3; padding-right: 14px; color: var(--ink-2); font-size: 13px; margin: 6px 0; }
-      .item .meta { grid-column: 2; grid-row: 4; padding: 0 14px 12px 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
-      .item .meta a { color: var(--ink-2); font-weight: 700; text-decoration: none; }
-      .item .meta a:hover { color: var(--ink); text-decoration: underline; }
-      .item .price .now { font-family: "Noto Serif SC", serif; font-size: 17px; font-weight: 900; }
-      .item .price .was { font-size: 12.5px; color: var(--ink-3); text-decoration: line-through; }
-      .tag {
-        display: inline-block;
-        font-size: 12px;
-        font-weight: 700;
-        padding: 2px 9px;
-        border-radius: 999px;
-        line-height: 1.7;
-      }
-      .tag.urgent { background: var(--urgent-soft); color: var(--urgent); }
-      .tag.watch { background: var(--watch-soft); color: var(--watch); }
-      .tag.drop { background: var(--urgent-soft); color: var(--urgent); }
+  /* ---------- events ---------- */
+  $app.addEventListener('click',function(e){
+    var f=e.target.closest('a[data-focus]');
+    if(f){pendingFocus=f.getAttribute('data-focus');sfx('nav');return}
+    if(e.target.closest('a.back')){sfx('nav');return}
+    var fb=e.target.closest('.fold-band');
+    if(fb){
+      if(e.detail===0){var fk=fb.getAttribute('data-fold');animateTo(fk,isOpen[fk]?0:1)}
+      return;
+    }
+    var el=e.target.closest('[data-act]'); if(!el)return;
+    var act=el.getAttribute('data-act');
+    var row=el.closest('[data-id]');
+    var id=row?row.getAttribute('data-id'):null;
+    var t;
+    if(act==='toggle'){
+      t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
+      t.done=!t.done; sfx(t.done?'done':'undo'); save(K.todo,todos); updateTodo();
+    }else if(act==='today'){
+      t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
+      t.today=!t.today; sfx('tick'); save(K.todo,todos); updateTodo();
+    }else if(act==='del'){
+      sfx('del'); todos=todos.filter(function(x){return x.id!==id}); save(K.todo,todos); updateTodo();
+    }else if(act==='chip'){
+      sfx('tick'); ui[el.getAttribute('data-group')]=el.getAttribute('data-val');
+      var sibs=el.parentNode.querySelectorAll('.chip');
+      for(var k=0;k<sibs.length;k++)sibs[k].setAttribute('aria-pressed',sibs[k]===el?'true':'false');
+      renderShopLists();
+    }else if(act==='buy'){
+      sfx('buy'); bought[id]=Date.now(); save(K.bought,bought); renderShopLists();
+    }else if(act==='restore'){
+      sfx('restore'); delete bought[id]; save(K.bought,bought); renderShopLists();
+    }else if(act==='clear'){
+      sfx('clear'); Object.keys(bought).forEach(function(b){if(gone.indexOf(b)<0)gone.push(b)});
+      bought={}; save(K.bought,bought); save(K.gone,gone); renderShopLists();
+    }else if(act==='pic'){
+      pendingImg=id; document.getElementById('imgInput').click();
+    }
+  });
 
-      /* ---------- Buy / restore buttons ---------- */
-      .buy-btn {
-        font: inherit;
-        font-size: 12.5px;
-        font-weight: 700;
-        cursor: pointer;
-        color: var(--ink-2);
-        background: transparent;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 3px 12px;
-        margin-left: auto;
-        white-space: nowrap;
-      }
-      .buy-btn:hover { border-color: var(--ink-3); color: var(--ink); }
-      .buy-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-      .clear-btn {
-        font: inherit;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        color: var(--urgent);
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 6px 16px;
-        box-shadow: var(--shadow);
-      }
-      .clear-btn:hover { border-color: var(--urgent); }
-      .clear-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-      .clear-btn[disabled] { opacity: .45; cursor: default; }
+  $app.addEventListener('submit',function(e){
+    if(e.target.id!=='addForm')return;
+    e.preventDefault();
+    var inp=document.getElementById('newTodo');
+    var text=inp.value.trim(); if(!text)return;
+    sfx('pop'); todos.unshift({id:uid(),text:text,done:false,today:false});
+    save(K.todo,todos);
+    inp.value='';
+    updateTodo();
+    if(!isOpen.all)animateTo('all',1);
+  });
 
-      /* ---------- Empty state ---------- */
-      .empty {
-        border: 1.5px dashed var(--line);
-        border-radius: 10px;
-        padding: 30px 20px;
-        text-align: center;
-        color: var(--ink-3);
-        background: transparent;
-      }
-      .empty .big { font-size: 15px; font-weight: 500; color: var(--ink-2); margin-bottom: 4px; }
-      .empty .small { font-size: 13px; }
+  document.getElementById('imgInput').addEventListener('change',function(e){
+    var file=e.target.files&&e.target.files[0]; var id=pendingImg; e.target.value='';
+    if(!file||!id)return;
+    var url=URL.createObjectURL(file),im=new Image();
+    im.onload=function(){
+      var s=Math.min(1,600/Math.max(im.width,im.height));
+      var c=document.createElement('canvas'); c.width=Math.round(im.width*s); c.height=Math.round(im.height*s);
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      imgs[id]=c.toDataURL('image/jpeg',.82);
+      sfx('shutter');
+      if(!save(K.img,imgs))toast('图片换上了，但这台设备存不下，刷新后会消失。');
+      renderShopLists();
+    };
+    im.onerror=function(){URL.revokeObjectURL(url);toast('这张图读不出来，换一张试试。')};
+    im.src=url;
+  });
 
-      /* ---------- How to add ---------- */
-      .howto {
-        background: var(--surface-2);
-        border-radius: 10px;
-        padding: 16px 18px;
-        font-size: 14px;
-        color: var(--ink-2);
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-      }
-      .howto svg { flex: none; margin-top: 2px; color: var(--ink-3); }
-      .howto b { color: var(--ink); }
-
-      @media (max-width: 520px) {
-        .wrap { padding: 20px 14px 44px; }
-        .summary { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .stat { padding: 11px 12px 9px; }
-        .stat .num { font-size: 24px; }
-        .stat .lbl { font-size: 12px; }
-        .sec-head { flex-wrap: wrap; gap: 4px 10px; }
-        .sec-head .count { margin-left: 0; }
-      }
-      /* ---------- 顶层双模块 & 代办 ---------- */
-      .module-cards { grid-template-columns: repeat(2, 1fr); }
-      @media (max-width: 520px) { .module-cards { grid-template-columns: 1fr; } }
-      .group-card.active { border-color: var(--ink); }
-      .todo-add { display: flex; gap: 8px; margin: 4px 0 16px; }
-      .todo-add input {
-        flex: 1; min-width: 0;
-        font: inherit; font-size: 15px;
-        padding: 11px 14px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: var(--surface);
-        color: var(--ink);
-      }
-      .todo-add input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
-      .todo-add-btn {
-        font: inherit; font-size: 15px; font-weight: 700;
-        cursor: pointer;
-        background: var(--ink); color: var(--bg);
-        border: 1px solid var(--ink);
-        border-radius: 10px;
-        padding: 11px 18px;
-        white-space: nowrap;
-      }
-      .todo-list { display: grid; gap: 8px; }
-      .todo-item {
-        display: flex; align-items: center; gap: 10px;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        box-shadow: var(--shadow);
-        padding: 12px 14px;
-      }
-      .todo-item.done .todo-text { text-decoration: line-through; color: var(--ink-3); }
-      .todo-check {
-        flex: none;
-        width: 26px; height: 26px;
-        border-radius: 50%;
-        border: 2px solid var(--ink-3);
-        background: transparent;
-        cursor: pointer;
-        font: inherit; font-size: 15px; line-height: 1;
-        color: var(--bg);
-        display: flex; align-items: center; justify-content: center;
-        padding: 0;
-      }
-      .todo-item.done .todo-check { background: var(--ink); border-color: var(--ink); }
-      .todo-text { flex: 1; min-width: 0; font-size: 15px; line-height: 1.45; word-break: break-word; }
-      .todo-today {
-        flex: none;
-        font: inherit; font-size: 12.5px; font-weight: 700;
-        cursor: pointer;
-        color: var(--ink-3);
-        background: transparent;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 3px 12px;
-        white-space: nowrap;
-      }
-      .todo-today[aria-pressed="true"] { background: var(--gold-soft); color: var(--gold); border-color: var(--gold); }
-      .todo-del {
-        flex: none;
-        font: inherit; font-size: 16px;
-        cursor: pointer;
-        color: var(--ink-3);
-        background: transparent;
-        border: 0;
-        padding: 4px 8px;
-        line-height: 1;
-      }
-      .todo-del:hover { color: var(--urgent); }
-    </style>
-    <style>
-      /* ---------- Earth × BRAVE 视觉重设计（2026-11-20） ---------- */
-      :root {
-        /* Earth 调色板（VectorSVG）：Walnut 胡桃棕 #503B27 / Moss 苔藓绿 #767C47 / Copper 古铜橙 #C06A33 / Vicuña Tan 驼色 #CDAB6E / Oat Milk 燕麦奶油 #E6DAC9 */
-        --cream: #E6DAC9;
-        --ruby: #C06A33;
-        --indigo: #503B27;
-        --moss: #767C47;
-        --nectar: #CDAB6E;
-        --bg: #E6DAC9;
-        --surface: #F6EEDD;
-        --surface-2: #DCCFB2;
-        --ink: #503B27;
-        --ink-2: #6B5A44;
-        --ink-3: #8A765C;
-        --line: #CFC0A4;
-        --urgent: #C06A33;
-        --urgent-soft: #F3E2D3;
-        --watch: #767C47;
-        --watch-soft: #E9EAD9;
-        --gold: #C06A33;
-        --gold-soft: #F3E2D3;
-        --shadow: 0 1px 2px rgba(80,59,39,.08), 0 12px 30px -16px rgba(80,59,39,.30);
-      }
-      /* Earth 调色板为浅色主题，不再跟随系统深色模式切换。 */
-      /* 标题区：实色 hero 色块 */
-      .intro {
-        background: var(--indigo);
-        border-radius: 20px;
-        padding: 26px 22px 22px;
-        margin-bottom: 22px;
-      }
-      .intro h1 { color: var(--cream); }
-      .intro p { color: rgba(230,218,201,.88); }
-      .intro p b { color: var(--cream); }
-      #todoView .intro { background: var(--ruby); }
-      #shopView .intro { background: var(--moss); }
-      /* 概览数字：三块实色 */
-      .stat { border-radius: 14px; }
-      .stat:nth-child(1) { background: var(--indigo); border-color: var(--indigo); }
-      .stat.urgent { background: var(--ruby); border-color: var(--ruby); }
-      .stat.watch { background: var(--moss); border-color: var(--moss); }
-      .stat .num { color: var(--cream); }
-      .stat .lbl { color: rgba(230,218,201,.85); }
-      .stat.urgent .num, .stat.watch .num { color: var(--cream); }
-      /* 模块卡 / 分组卡：实色色块 + 米白字 */
-      .group-card { border-radius: 18px; padding: 28px 22px 20px; }
-      .group-card[data-module="todo"], .group-card[data-group="urgent"] { background: var(--ruby); border-color: var(--ruby); color: var(--cream); }
-      .group-card[data-module="shop"], .group-card[data-group="purchased"] { background: var(--indigo); border-color: var(--indigo); color: var(--cream); }
-      .group-card[data-todo-view="today"] { background: var(--nectar); border-color: var(--nectar); color: var(--cream); }
-      .group-card[data-todo-view="all"], .group-card[data-group="watch"] { background: var(--moss); border-color: var(--moss); color: var(--cream); }
-      .group-card[data-module] .gc-title, .group-card[data-group] .gc-title, .group-card[data-todo-view] .gc-title { color: var(--cream); }
-      .group-card[data-module] .gc-desc, .group-card[data-group] .gc-desc, .group-card[data-todo-view] .gc-desc { color: rgba(230,218,201,.85); }
-      .group-card[data-module] .gc-count, .group-card[data-group] .gc-count, .group-card[data-todo-view] .gc-count,
-      .group-card[data-module] .gc-arrow, .group-card[data-group] .gc-arrow, .group-card[data-todo-view] .gc-arrow { color: rgba(230,218,201,.9); }
-      .group-card.active { border-color: var(--cream); box-shadow: 0 0 0 3px var(--cream), 0 0 0 6px var(--ink); }
-      /* 待办操作按钮 */
-      .todo-add-btn { background: var(--ruby); border-color: var(--ruby); color: var(--cream); }
-      .todo-item.done .todo-check { background: var(--moss); border-color: var(--moss); }
-      /* “今天代办”卡是浅驼色，配深胡桃字才看得清 */
-      .group-card[data-todo-view="today"] { color: #503B27; }
-      .group-card[data-todo-view="today"] .gc-title { color: #503B27; }
-      .group-card[data-todo-view="today"] .gc-desc { color: rgba(80,59,39,.78); }
-      .group-card[data-todo-view="today"] .gc-count, .group-card[data-todo-view="today"] .gc-arrow { color: rgba(80,59,39,.85); }
-    </style>
-    <style>
-      /* ===== 第三轮：暗色叶背景 + 层叠按钮 + 滑入动效 + 设计字体 ===== */
-      /* Earth 调色板：暗色叶背景已去掉，页面底色就是燕麦奶油 #E6DAC9（见 --bg）。 */
-      .wrap { position: relative; z-index: 1; }
-
-      /* 层叠按钮：每张彩卡身后露出一层对比色，像参考图二那样上下叠着 */
-      .group-card { transition: transform .15s, border-color .15s, box-shadow .15s; }
-      .group-card[data-module="todo"], .group-card[data-group="urgent"] { --layer: #503B27; }
-      .group-card[data-module="shop"], .group-card[data-group="purchased"] { --layer: #C06A33; }
-      .group-card[data-todo-view="today"] { --layer: #767C47; }
-      .group-card[data-todo-view="all"], .group-card[data-group="watch"] { --layer: #CDAB6E; }
-      .group-card { box-shadow: 7px 7px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow); }
-      .group-card:active { transform: translate(4px, 4px); box-shadow: 3px 3px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow); }
-      .group-card.active { box-shadow: 7px 7px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow); outline: 3px solid #503B27; outline-offset: 3px; }
-
-      /* 页面切换：点的那块颜色先滑上来盖住，再淡出露出下一页 */
-      #pageWipe { position: fixed; inset: 0; z-index: 999; pointer-events: none; background: #503B27; opacity: 0; transform: translateY(100%); transition: transform .38s cubic-bezier(.32,.72,.35,1), opacity .38s ease; }
-      #pageWipe.on { opacity: 1; transform: translateY(0); }
-      #pageWipe.away { opacity: 0; transform: translateY(-100%); }
-
-      /* 设计字体：标题、卡片名、大数字换青棵黄油体 */
-      .intro h1, .gc-title, .stat .num, .sec-head h2 { font-family: "ZCOOL QingKe HuangYou", "Noto Serif SC", "Noto Sans SC", serif; }
-    </style>
-    <style>
-      /* ===== 第四轮：mombo / florest 植物风重设计（2026-11-21） ===== */
-      /* 参考图语言：鼠尾草绿大圆角 hero（底部弧形收边）、奶油底、编号分区、有机圆角卡片。
-         功能、结构、localStorage 键名全部不动，只改造型和布局。 */
-      :root {
-        --sage: #5E7A55;          /* 鼠尾草绿：Earth 苔藓绿按参考图加深调和 */
-        --forest: #42563D;        /* 森林绿：深色对比 */
-        --ruby: #A85A2B;          /* 古铜加深一档：配纯白字约 5.1:1 */
-        --moss: #6B7040;          /* 苔藓加深一档：配纯白字约 5.2:1 */
-        --paper: #FBF7EC;         /* 奶油卡面，比底色略亮 */
-        --shadow-soft: 0 2px 4px rgba(80,59,39,.06), 0 18px 36px -18px rgba(80,59,39,.28);
-      }
-
-      /* ---------- Hero：绿底大圆角 + 弧形收边 + 主题插画 ---------- */
-      .intro {
-        position: relative;
-        overflow: hidden;
-        background: var(--sage);
-        border-radius: 32px 32px 104px 32px / 32px 32px 72px 32px;
-        padding: 30px 28px 44px;
-        min-height: 218px;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        margin-bottom: 26px;
-        box-shadow: var(--shadow-soft);
-      }
-      #todoView .intro {
-        background: var(--sage);
-        border-radius: 32px 32px 32px 104px / 32px 32px 32px 72px;
-      }
-      #shopView .intro { background: var(--sage); }
-      .intro h1 {
-        color: #fff;
-        font-size: clamp(34px, 7vw, 48px);
-        line-height: 1.15;
-        margin: 0 0 10px;
-      }
-      .intro p { color: rgba(255,255,255,.93); max-width: 25em; }
-      .intro p b { color: #fff; }
-      .hero-deco {
-        position: absolute;
-        top: 20px;
-        right: 22px;
-        width: 148px;
-        height: 148px;
-        pointer-events: none;
-        filter: drop-shadow(0 10px 16px rgba(30,45,25,.35));
-      }
-      .hero-deco svg { display: block; width: 100%; height: 100%; }
-
-      /* ---------- 编号：卡片 01/02/03 + 分区标题 01/02/03 ---------- */
-      .gc-num {
-        display: block;
-        font-family: "ZCOOL QingKe HuangYou", "Noto Serif SC", "Noto Sans SC", serif;
-        font-size: 42px;
-        line-height: 1;
-        color: rgba(255,255,255,.92);
-        margin-bottom: 8px;
-        letter-spacing: .02em;
-      }
-      .group-card[data-todo-view="today"] .gc-num { color: rgba(80,59,39,.85); }
-      .sec-num {
-        font-family: "ZCOOL QingKe HuangYou", "Noto Serif SC", "Noto Sans SC", serif;
-        font-size: 30px;
-        line-height: 1;
-        flex: none;
-      }
-      section.urgent-sec .sec-num { color: var(--ruby); }
-      section.watch-sec .sec-num { color: var(--moss); }
-      section[data-group="purchased"] .sec-num { color: var(--indigo); }
-
-      /* ---------- 模块卡 / 分组卡：有机圆角 + 纯白字（修对比度） ---------- */
-      .group-cards { gap: 14px; }
-      .group-card {
-        border-radius: 26px;
-        padding: 26px 24px 22px;
-        min-height: 172px;
-        box-shadow: 6px 6px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow-soft);
-      }
-      .group-card:active { box-shadow: 3px 3px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow-soft); }
-      .group-card.active { box-shadow: 6px 6px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow-soft); }
-      .gc-title { font-size: 30px; }
-      .group-card[data-module] .gc-title, .group-card[data-group] .gc-title, .group-card[data-todo-view] .gc-title { color: #fff; }
-      .group-card[data-module] .gc-desc, .group-card[data-group] .gc-desc, .group-card[data-todo-view] .gc-desc { color: rgba(255,255,255,.93); }
-      .group-card[data-module] .gc-count, .group-card[data-group] .gc-count, .group-card[data-todo-view] .gc-count,
-      .group-card[data-module] .gc-arrow, .group-card[data-group] .gc-arrow, .group-card[data-todo-view] .gc-arrow { color: rgba(255,255,255,.95); }
-      /* 今天代办是浅驼卡，仍配深胡桃字 */
-      .group-card[data-todo-view="today"] .gc-title { color: #503B27; }
-      .group-card[data-todo-view="today"] .gc-desc { color: rgba(80,59,39,.8); }
-      .group-card[data-todo-view="today"] .gc-count, .group-card[data-todo-view="today"] .gc-arrow { color: rgba(80,59,39,.9); }
-
-      /* ---------- 概览统计：更圆、纯白字 ---------- */
-      .summary { gap: 12px; }
-      .stat { border-radius: 22px; padding: 18px 18px 16px; box-shadow: var(--shadow-soft); }
-      .stat .num, .stat.urgent .num, .stat.watch .num { color: #fff; }
-      .stat .lbl { color: rgba(255,255,255,.92); }
-
-      /* ---------- 分区标题：细线 + 大数字 ---------- */
-      .sec-head { border-bottom: 1.5px solid var(--line); padding-bottom: 12px; }
-      .sec-head h2 { font-size: 24px; }
-
-      /* ---------- 商品卡 / 待办行 / 其他：更圆润 ---------- */
-      .item { border-radius: 22px; box-shadow: var(--shadow-soft); }
-      .item .pic-add { border-radius: 14px; }
-      .todo-item { border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow-soft); }
-      .todo-add input { border-radius: 14px; }
-      .todo-add-btn { border-radius: 14px; color: #fff; }
-      .cat-panel { border-radius: 16px; }
-      .empty { border-radius: 18px; }
-      .howto {
-        background: #EDF0E2;
-        border: 1px solid #DCE1CB;
-        border-radius: 20px;
-        box-shadow: var(--shadow-soft);
-      }
-      .howto svg { color: var(--sage); }
-
-      @media (max-width: 520px) {
-        .intro { min-height: 204px; padding: 24px 20px 36px; border-radius: 28px 28px 84px 28px / 28px 28px 60px 28px; }
-        #todoView .intro { border-radius: 28px 28px 28px 84px / 28px 28px 28px 60px; }
-        .intro h1 { font-size: clamp(30px, 8vw, 38px); }
-        .intro p { max-width: calc(100% - 84px); font-size: 14px; }
-        .hero-deco { width: 76px; height: 76px; top: 14px; right: 14px; }
-        .group-card { min-height: 0; padding: 22px 20px 18px; }
-        .gc-num { font-size: 34px; }
-        .gc-title { font-size: 26px; }
-        .sec-num { font-size: 26px; }
-      }
-    </style>
-  </head>
-  <body>
-    <main class="wrap">
-      <div id="homeView">
-      <div class="intro">
-        <h1>我的代办事项</h1>
-        <span class="hero-deco" aria-hidden="true"><svg viewBox="0 0 148 148" fill="none">
-          <rect x="6" y="6" width="136" height="136" rx="28" fill="#FBF7EC"/>
-          <circle cx="38" cy="38" r="13" fill="#5E7A55"/>
-          <path d="M31.5 38.5 36.5 43.5 45 34" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="62" y="31" width="58" height="7" rx="3.5" fill="#D8DCC4"/>
-          <rect x="62" y="44" width="38" height="7" rx="3.5" fill="#E7EAD8"/>
-          <circle cx="38" cy="74" r="13" fill="#5E7A55"/>
-          <path d="M31.5 74.5 36.5 79.5 45 70" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="62" y="67" width="58" height="7" rx="3.5" fill="#D8DCC4"/>
-          <rect x="62" y="80" width="48" height="7" rx="3.5" fill="#E7EAD8"/>
-          <circle cx="38" cy="110" r="13" fill="none" stroke="#8A765C" stroke-width="3"/>
-          <rect x="62" y="103" width="58" height="7" rx="3.5" fill="#D8DCC4"/>
-          <rect x="62" y="116" width="30" height="7" rx="3.5" fill="#E7EAD8"/>
-        </svg></span>
-        <p>两件事放在一起：<b>代办事项</b>是今天要做的事和全部待办；<b>购物清单</b>是想买还没下单的东西。点下面的模块进去。</p>
-      </div>
-
-      <div class="group-cards module-cards">
-        <button type="button" class="group-card" data-module="todo">
-          <span class="gc-num" aria-hidden="true">01</span>
-          <span class="gc-title">代办事项</span>
-          <span class="gc-desc">今天要做的事，和全部待办</span>
-          <span class="gc-foot"><span class="gc-count" id="todoCardCount">0 件待办</span><span class="gc-arrow" aria-hidden="true">›</span></span>
-        </button>
-        <button type="button" class="group-card" data-module="shop">
-          <span class="gc-num" aria-hidden="true">02</span>
-          <span class="gc-title">购物清单</span>
-          <span class="gc-desc">想买，还没下单的东西</span>
-          <span class="gc-foot"><span class="gc-count" id="shopCardCount">7 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
-        </button>
-      </div>
-      </div>
-
-      <div id="todoView" hidden>
-      <div class="group-top">
-        <button type="button" class="back-btn" id="todoBackBtn">‹ 返回</button>
-      </div>
-      <div class="intro">
-        <h1>代办事项</h1>
-        <span class="hero-deco" aria-hidden="true"><svg viewBox="0 0 148 148" fill="none">
-          <rect x="6" y="6" width="136" height="136" rx="28" fill="#FBF7EC"/>
-          <circle cx="74" cy="60" r="34" fill="#5E7A55"/>
-          <path d="M57 61 69 73 93 47" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="48" y="110" width="52" height="7" rx="3.5" fill="#D8DCC4"/>
-          <rect x="58" y="124" width="32" height="7" rx="3.5" fill="#E7EAD8"/>
-        </svg></span>
-        <p>下面写一条要做的事，点「今天」就进<b>今天代办</b>。做完了打勾，今天代办里就不再显示；不要了点 × 删掉。</p>
-      </div>
-
-      <div class="group-cards module-cards">
-        <button type="button" class="group-card" data-todo-view="today">
-          <span class="gc-num" aria-hidden="true">01</span>
-          <span class="gc-title">今天代办</span>
-          <span class="gc-desc">今天要做的事</span>
-          <span class="gc-foot"><span class="gc-count" id="todoTodayCount">0 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
-        </button>
-        <button type="button" class="group-card" data-todo-view="all">
-          <span class="gc-num" aria-hidden="true">02</span>
-          <span class="gc-title">代办清单</span>
-          <span class="gc-desc">全部待办事项</span>
-          <span class="gc-foot"><span class="gc-count" id="todoAllCount">0 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
-        </button>
-      </div>
-
-      <div class="todo-add">
-        <input type="text" id="todoInput" placeholder="写一条要做的事…" aria-label="新的待办事项">
-        <button type="button" class="todo-add-btn" id="todoAddBtn">＋ 添加</button>
-      </div>
-      <div class="todo-list" id="todoList"></div>
-      <div class="empty" id="todoEmpty">
-        <div class="big">还没有待办事项</div>
-        <div class="small">在上面写一条，点「添加」就记下来了。</div>
-      </div>
-      </div>
-
-      <div id="shopView" hidden>
-      <div class="group-top">
-        <button type="button" class="back-btn" id="shopBackBtn">‹ 返回</button>
-      </div>
-      <div class="intro">
-        <h1>想买，还没下单的</h1>
-        <span class="hero-deco" aria-hidden="true"><svg viewBox="0 0 148 148" fill="none">
-          <rect x="6" y="6" width="136" height="136" rx="28" fill="#FBF7EC"/>
-          <circle cx="74" cy="48" r="8" fill="#CDAB6E"/>
-          <path d="M60 66 V54 C60 44 66 38 74 38 C82 38 88 44 88 54 V66" stroke="#42563D" stroke-width="5" stroke-linecap="round"/>
-          <path d="M46 66 H102 L97 116 Q96.5 124 88 124 H60 Q51.5 124 51 116 Z" fill="#5E7A55"/>
-          <path d="M48 82 H100" stroke="#fff" stroke-opacity=".28" stroke-width="2" stroke-linecap="round"/>
-          <g transform="rotate(15 106 74)">
-            <rect x="95" y="66" width="24" height="15" rx="4" fill="#C06A33"/>
-            <circle cx="100" cy="73.5" r="2.2" fill="#FBF7EC"/>
-          </g>
-        </svg></span>
-        <p>这张清单收着所有<b>计划代购、还没买</b>的东西，分成两类：<b>待购买</b>的近期就要买；<b>等折扣</b>的不急，盯着价格，降了再出手。点下面的板块进去，看每一类都有些什么。买好了的点「已购买」，会进「已购清单」，7 天内还能恢复。</p>
-      </div>
-
-      <div class="summary" aria-label="清单概览">
-        <div class="stat">
-          <div class="num" id="statTotal">7</div>
-          <div class="lbl">清单总数</div>
-        </div>
-        <div class="stat urgent">
-          <div class="num" id="statUrgent">5</div>
-          <div class="lbl">待购买</div>
-        </div>
-        <div class="stat watch">
-          <div class="num" id="statWatch">2</div>
-          <div class="lbl">等折扣</div>
-        </div>
-      </div>
-
-      <div class="group-cards">
-        <button type="button" class="group-card urgent-card" data-group="urgent">
-          <span class="gc-num" aria-hidden="true">01</span>
-          <span class="gc-title">待购买</span>
-          <span class="gc-desc">近期就要买，别拖</span>
-          <span class="gc-foot"><span class="gc-count">5 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
-        </button>
-        <button type="button" class="group-card watch-card" data-group="watch">
-          <span class="gc-num" aria-hidden="true">02</span>
-          <span class="gc-title">等折扣</span>
-          <span class="gc-desc">先观望，等降价或有活动再买</span>
-          <span class="gc-foot"><span class="gc-count">2 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
-        </button>
-        <button type="button" class="group-card" data-group="purchased">
-          <span class="gc-num" aria-hidden="true">03</span>
-          <span class="gc-title">已购清单</span>
-          <span class="gc-desc">买好了的都在这里，7 天内可恢复</span>
-          <span class="gc-foot"><span class="gc-count">0 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
-        </button>
-      </div>
-      </div>
-
-      <div id="groupView" hidden>
-      <div class="group-top">
-        <button type="button" class="back-btn" id="backBtn">‹ 返回</button>
-      </div>
-
-      <div class="filter" id="placeFilter" role="group" aria-label="按购买地点筛选">
-        <span class="flabel">购买地点</span>
-        <button type="button" class="chip" data-filter="all" aria-pressed="true">全部</button>
-        <button type="button" class="chip" data-filter="宜家" aria-pressed="false">宜家</button>
-        <button type="button" class="chip" data-filter="淘宝" aria-pressed="false">淘宝</button>
-      </div>
-
-      <div class="filter cat-row" id="catFilter" role="group" aria-label="按物品类型筛选">
-        <span class="flabel">物品类型</span>
-        <button type="button" class="chip cat-toggle" id="catToggle" aria-expanded="false" aria-controls="catPanel">分类<span class="caret" aria-hidden="true">▾</span></button>
-        <span class="flabel" id="catCurrent" aria-live="polite">全部类型</span>
-        <div class="cat-panel" id="catPanel" hidden>
-          <button type="button" class="chip" data-cat="all" aria-pressed="true">全部类型</button>
-          <button type="button" class="chip" data-cat="玩具类" aria-pressed="false">玩具类</button>
-          <button type="button" class="chip" data-cat="工具类" aria-pressed="false">工具类</button>
-          <button type="button" class="chip" data-cat="厨具类" aria-pressed="false">厨具类</button>
-          <button type="button" class="chip" data-cat="日用品" aria-pressed="false">日用品</button>
-          <button type="button" class="chip" data-cat="食物" aria-pressed="false">食物</button>
-        </div>
-      </div>
-
-      <section class="urgent-sec" data-group="urgent" aria-labelledby="urgent-title">
-        <div class="sec-head">
-          <span class="sec-num" aria-hidden="true">01</span>
-          <h2 id="urgent-title">待购买</h2>
-          <span class="desc">近期就要买，别拖</span>
-          <span class="count">5 件</span>
-        </div>
-        <div class="items">
-          <article class="item" data-id="basin" data-place="宜家" data-cat="厨具类">
-            <button type="button" class="pic pic-empty" data-pic="basin" aria-label="添加图片"><span class="pic-add"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg><span>待添加</span></span></button>
-            <div class="name">金属带孔盆 <span class="tag place">宜家</span> <span class="tag cat">厨具类</span></div>
-            <div class="price">
-              <div class="now">待定</div>
-            </div>
-            <p class="note">去宜家买，具体款式和价格到店再定。</p>
-            <div class="meta">
-              <span>购买地点：宜家</span>
-              <button type="button" class="buy-btn" data-buy="basin">✓ 已购买</button>
-            </div>
-          </article>
-          <article class="item" data-id="gundam-snake-stand" data-place="淘宝" data-cat="玩具类">
-            <button type="button" class="pic pic-empty" data-pic="gundam-snake-stand" aria-label="添加图片"><span class="pic-add"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg><span>待添加</span></span></button>
-            <div class="name">1/144 蛇骨磁吸底座支架（HG / RG 高达手办造型支架） <span class="tag place">淘宝</span> <span class="tag cat">玩具类</span></div>
-            <div class="price">
-              <div class="now">待定</div>
-            </div>
-            <p class="note">1/144 比例蛇骨磁吸底座，给 HG / RG 高达手办摆造型、凹造型用。</p>
-            <div class="meta">
-              <span>购买地点：淘宝</span>
-              <a href="https://e.tb.cn/h.jndEh1dzYQU36P9?tk=3xEM6UbZsxS" target="_blank" rel="noopener">去淘宝看看 ›</a>
-              <button type="button" class="buy-btn" data-buy="gundam-snake-stand">✓ 已购买</button>
-            </div>
-          </article>
-          <article class="item" data-id="model-grass" data-place="淘宝" data-cat="玩具类">
-            <button type="button" class="pic pic-empty" data-pic="model-grass" aria-label="添加图片"><span class="pic-add"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg><span>待添加</span></span></button>
-            <div class="name">沙盘模型草皮（建筑模型 / 微景观草地造景 DIY 草坪） <span class="tag place">淘宝</span> <span class="tag cat">玩具类</span></div>
-            <div class="price">
-              <div class="now">待定</div>
-            </div>
-            <p class="note">做建筑模型、室外微景观的草地草皮，DIY 手工模型造景用。</p>
-            <div class="meta">
-              <span>购买地点：淘宝</span>
-              <a href="https://e.tb.cn/h.jO0R4uAUsYodsNE?tk=aOyx6UbccXi" target="_blank" rel="noopener">去淘宝看看 ›</a>
-              <button type="button" class="buy-btn" data-buy="model-grass">✓ 已购买</button>
-            </div>
-          </article>
-          <article class="item" data-id="gundam-floor-stand" data-place="淘宝" data-cat="玩具类">
-            <button type="button" class="pic pic-empty" data-pic="gundam-floor-stand" aria-label="添加图片"><span class="pic-add"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg><span>待添加</span></span></button>
-            <div class="name">高达落地支架 <span class="tag place">淘宝</span> <span class="tag cat">玩具类</span></div>
-            <div class="price">
-              <div class="now">待定</div>
-            </div>
-            <p class="note">高达模型落地展示支架。</p>
-            <div class="meta">
-              <span>购买地点：淘宝</span>
-              <button type="button" class="buy-btn" data-buy="gundam-floor-stand">✓ 已购买</button>
-            </div>
-          </article>
-          <article class="item" data-id="black-baseball-cap" data-cat="日用品">
-            <button type="button" class="pic pic-empty" data-pic="black-baseball-cap" aria-label="添加图片"><span class="pic-add"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg><span>待添加</span></span></button>
-            <div class="name">黑色棒球帽 <span class="tag cat">日用品</span></div>
-            <div class="price">
-              <div class="now">待定</div>
-            </div>
-            <p class="note">Boxing Day（12 月 26 日）买一顶黑色棒球帽，款式和价格到时再定。</p>
-            <div class="meta">
-              <span>购买时间：Boxing Day</span>
-              <button type="button" class="buy-btn" data-buy="black-baseball-cap">✓ 已购买</button>
-            </div>
-          </article>
-        </div>
-        <div class="filter-none" hidden>这一栏没有符合当前筛选的商品。</div>
-      </section>
-
-      <section class="watch-sec" data-group="watch" aria-labelledby="watch-title">
-        <div class="sec-head">
-          <span class="sec-num" aria-hidden="true">02</span>
-          <h2 id="watch-title">等折扣</h2>
-          <span class="desc">先观望，等降价或有活动再买</span>
-          <span class="count">2 件</span>
-        </div>
-        <div class="items">
-          <article class="item" data-id="stormtrooper-kenner" data-cat="玩具类">
-            <button type="button" class="pic" data-pic="stormtrooper-kenner" aria-label="更换图片"><img src="assets/stormtrooper-kenner.jpg" alt="星战 50 周年黑系列 风暴兵 Kenner 复古卡版"></button>
-            <div class="name">星战 50 周年黑系列 风暴兵 Kenner 复古卡版 <span class="tag watch">等开订</span> <span class="tag cat">玩具类</span></div>
-            <div class="price">
-              <div class="now">未定价</div>
-            </div>
-            <p class="note">还没开预购，预计 2027 年才上架（美国 Target / Walmart / Disney Store，海外走 Fan Channel）。普通金卡版已开预购，29.99 美元，2027 年春季发售。</p>
-            <div class="meta">
-              <span>状态：等开订</span>
-              <span>下次检查：2026-11-23</span>
-              <button type="button" class="buy-btn" data-buy="stormtrooper-kenner">✓ 已购买</button>
-            </div>
-          </article>
-          <article class="item" data-id="batman-inart" data-cat="玩具类">
-            <button type="button" class="pic" data-pic="batman-inart" aria-label="更换图片"><img src="assets/batman-inart.jpg" alt="INART 绝对蝙蝠侠"></button>
-            <div class="name">INART 绝对蝙蝠侠 <span class="tag watch">等预售</span> <span class="tag cat">玩具类</span></div>
-            <div class="price">
-              <div class="now">未定价</div>
-            </div>
-            <p class="note">原型已于 2026 年 10 月 3–4 日在上海 Wonder Festival 展出，暂无官宣、无售价、无淘宝预售。</p>
-            <div class="meta">
-              <span>状态：等预售</span>
-              <span>下次检查：约 2026-12-05</span>
-              <button type="button" class="buy-btn" data-buy="batman-inart">✓ 已购买</button>
-            </div>
-          </article>
-        </div>
-        <div class="filter-none" hidden>这一栏没有符合当前筛选的商品。</div>
-      </section>
-
-      <section data-group="purchased" aria-labelledby="purchased-title">
-        <div class="sec-head">
-          <span class="sec-num" aria-hidden="true">03</span>
-          <h2 id="purchased-title">已购清单</h2>
-          <span class="desc">7 天内可恢复，过期自动删除</span>
-          <span class="count">0 件</span>
-        </div>
-        <div class="filter" style="margin: 0 0 16px;">
-          <button type="button" class="clear-btn" id="clearPurchased">清空已购清单</button>
-        </div>
-        <div class="items" id="purchasedItems"></div>
-        <div class="empty" id="purchasedEmpty">
-          <div class="big">已购清单还是空的</div>
-          <div class="small">买好了的东西点「已购买」，就会出现在这里。</div>
-        </div>
-      </section>
-      </div>
-
-      <div class="howto">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-        <div><b>怎么往里加：</b>直接语音告诉我想买什么、急不急、有没有目标价，要去某个地方买的也一并说（比如「去 Costco 买」），我就更新到这张清单上，并标好购买地点。买好了点卡片上的「已购买」，东西会进「已购清单」，7 天内可以恢复，超过 7 天自动删除；已购清单里的「清空」会一次删掉里面的全部东西。</div>
-      </div>
-    </main>
-    <div id="pageWipe" aria-hidden="true"></div>
-    <input type="file" id="picInput" accept="image/*" hidden>
-    <script>
-      (function () {
-        var LS_PURCHASED = 'daigou-purchased-v1';
-        var LS_GONE = 'daigou-gone-v1';
-        var SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-        var DAY = 24 * 60 * 60 * 1000;
-
-        function readJSON(key, fallback) {
-          try {
-            var v = JSON.parse(localStorage.getItem(key));
-            return v !== null && typeof v === 'object' ? v : fallback;
-          } catch (e) { return fallback; }
-        }
-        function writeJSON(key, val) {
-          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
-        }
-
-        /* Expired purchases (>7 days) become permanently gone: they leave the
-           purchased list and never come back to the shopping list. */
-        function loadStore() {
-          var purchased = readJSON(LS_PURCHASED, {});
-          var gone = readJSON(LS_GONE, []);
-          if (!Array.isArray(gone)) gone = [];
-          var now = Date.now();
-          var changed = false;
-          Object.keys(purchased).forEach(function (id) {
-            if (now - purchased[id] > SEVEN_DAYS) {
-              delete purchased[id];
-              if (gone.indexOf(id) === -1) gone.push(id);
-              changed = true;
-            }
-          });
-          if (changed) { writeJSON(LS_PURCHASED, purchased); writeJSON(LS_GONE, gone); }
-          return { purchased: purchased, gone: gone };
-        }
-        var store = loadStore();
-
-        var placeChips = Array.prototype.slice.call(document.querySelectorAll('.chip[data-filter]'));
-        var catChips = Array.prototype.slice.call(document.querySelectorAll('.chip[data-cat]'));
-        var sections = Array.prototype.slice.call(document.querySelectorAll('section[data-group]'));
-        var toggle = document.getElementById('catToggle');
-        var panel = document.getElementById('catPanel');
-        var catCurrent = document.getElementById('catCurrent');
-        var homeView = document.getElementById('homeView');
-        var groupView = document.getElementById('groupView');
-        var shopView = document.getElementById('shopView');
-        var todoView = document.getElementById('todoView');
-        var shopBackBtn = document.getElementById('shopBackBtn');
-        var todoBackBtn = document.getElementById('todoBackBtn');
-        var todoInput = document.getElementById('todoInput');
-        var todoAddBtn = document.getElementById('todoAddBtn');
-        var todoList = document.getElementById('todoList');
-        var todoEmpty = document.getElementById('todoEmpty');
-        var todoCardCount = document.getElementById('todoCardCount');
-        var shopCardCount = document.getElementById('shopCardCount');
-        var todoTodayCount = document.getElementById('todoTodayCount');
-        var todoAllCount = document.getElementById('todoAllCount');
-        var backBtn = document.getElementById('backBtn');
-        var groupCards = Array.prototype.slice.call(document.querySelectorAll('.group-card[data-group]'));
-        var placeFilter = document.getElementById('placeFilter');
-        var catFilter = document.getElementById('catFilter');
-        var purchasedItems = document.getElementById('purchasedItems');
-        var purchasedEmpty = document.getElementById('purchasedEmpty');
-        var clearBtn = document.getElementById('clearPurchased');
-        var statTotal = document.getElementById('statTotal');
-        var statUrgent = document.getElementById('statUrgent');
-        var statWatch = document.getElementById('statWatch');
-        var state = { place: 'all', cat: 'all', group: null };
-
-        /* 商品图片：点图片可拍照或从相册选图换掉，照片缩到 600px 存本机 localStorage */
-        var LS_IMG = 'daigou-img-v1';
-        var picInput = document.getElementById('picInput');
-        var picTarget = null;
-
-        function setPicImage(pic, dataUrl, altText) {
-          pic.classList.remove('pic-empty');
-          pic.setAttribute('aria-label', '更换图片');
-          pic.innerHTML = '';
-          var img = document.createElement('img');
-          img.src = dataUrl;
-          img.alt = altText || '';
-          pic.appendChild(img);
-        }
-        function applyCustomImages() {
-          var imgs = readJSON(LS_IMG, {});
-          Object.keys(imgs).forEach(function (id) {
-            Array.prototype.slice.call(document.querySelectorAll('.pic[data-pic="' + id + '"]')).forEach(function (pic) {
-              if (pic.closest('#purchasedItems')) return; /* 克隆由 renderPurchased 从原卡片重新复制，不用单独设 */
-              setPicImage(pic, imgs[id]);
-            });
-          });
-        }
-        function downscaleImage(dataUrl, cb) {
-          var img = new Image();
-          img.onload = function () {
-            var max = 600, w = img.width, h = img.height;
-            if (w > max || h > max) { var s = Math.min(max / w, max / h); w = Math.round(w * s); h = Math.round(h * s); }
-            var cv = document.createElement('canvas');
-            cv.width = w; cv.height = h;
-            cv.getContext('2d').drawImage(img, 0, 0, w, h);
-            cb(cv.toDataURL('image/jpeg', 0.85));
-          };
-          img.onerror = function () { cb(dataUrl); };
-          img.src = dataUrl;
-        }
-        document.addEventListener('click', function (e) {
-          var t = e.target;
-          if (!t || !t.closest) return;
-          var pic = t.closest('.pic');
-          if (!pic) return;
-          picTarget = pic;
-          if (picInput) picInput.click();
-        });
-        if (picInput) {
-          picInput.addEventListener('change', function () {
-            var file = picInput.files && picInput.files[0];
-            picInput.value = '';
-            if (!file || !picTarget) return;
-            var id = picTarget.getAttribute('data-pic');
-            var reader = new FileReader();
-            reader.onload = function () {
-              downscaleImage(reader.result, function (dataUrl) {
-                var imgs = readJSON(LS_IMG, {});
-                imgs[id] = dataUrl;
-                writeJSON(LS_IMG, imgs);
-                Array.prototype.slice.call(document.querySelectorAll('.pic[data-pic="' + id + '"]')).forEach(function (pic) {
-                  if (pic.closest('#purchasedItems')) return;
-                  setPicImage(pic, dataUrl);
-                });
-                applyFilters();
-              });
-            };
-            reader.readAsDataURL(file);
-          });
-        }
-
-        function isPurchased(id) { return Object.prototype.hasOwnProperty.call(store.purchased, id); }
-        function isGone(id) { return store.gone.indexOf(id) !== -1; }
-        function activeItems() {
-          return Array.prototype.slice.call(document.querySelectorAll('.item[data-id]')).filter(function (item) {
-            var id = item.getAttribute('data-id');
-            return !isPurchased(id) && !isGone(id);
-          });
-        }
-
-        function fmtDate(ms) {
-          var d = new Date(ms);
-          return (d.getMonth() + 1) + '月' + d.getDate() + '日';
-        }
-
-        function renderPurchased() {
-          var sec = document.querySelector('section[data-group="purchased"]');
-          purchasedItems.innerHTML = '';
-          var ids = Object.keys(store.purchased);
-          ids.forEach(function (id) {
-            var src = document.querySelector('.item[data-id="' + id + '"]');
-            if (!src) return;
-            var clone = src.cloneNode(true);
-            clone.hidden = false; /* cloneNode 会连 hidden 属性一起复制过来，原卡片买后是隐藏的，不清掉克隆就一直看不见 */
-            var btn = clone.querySelector('[data-buy]');
-            if (btn) {
-              btn.textContent = '恢复';
-              btn.removeAttribute('data-buy');
-              btn.setAttribute('data-restore', id);
-            }
-            var meta = clone.querySelector('.meta');
-            if (meta) {
-              var left = Math.max(0, SEVEN_DAYS - (Date.now() - store.purchased[id]));
-              var days = Math.max(1, Math.ceil(left / DAY));
-              var span = document.createElement('span');
-              span.textContent = '购买于 ' + fmtDate(store.purchased[id]) + '，还剩 ' + days + ' 天可恢复';
-              meta.insertBefore(span, meta.firstChild);
-            }
-            purchasedItems.appendChild(clone);
-          });
-          if (purchasedEmpty) purchasedEmpty.hidden = ids.length !== 0;
-          if (clearBtn) clearBtn.disabled = ids.length === 0;
-          if (sec) {
-            var countEl = sec.querySelector('.sec-head .count');
-            if (countEl) countEl.textContent = ids.length + ' 件';
-          }
-          var card = document.querySelector('.group-card[data-group="purchased"] .gc-count');
-          if (card) card.textContent = ids.length + ' 件';
-        }
-
-        function renderCounts() {
-          var active = activeItems();
-          var urgent = active.filter(function (item) { return item.closest('section[data-group="urgent"]'); }).length;
-          var watch = active.filter(function (item) { return item.closest('section[data-group="watch"]'); }).length;
-          if (statTotal) statTotal.textContent = active.length;
-          if (statUrgent) statUrgent.textContent = urgent;
-          if (statWatch) statWatch.textContent = watch;
-          var uc = document.querySelector('.group-card[data-group="urgent"] .gc-count');
-          if (uc) uc.textContent = urgent + ' 件';
-          var wc = document.querySelector('.group-card[data-group="watch"] .gc-count');
-          if (wc) wc.textContent = watch + ' 件';
-          if (shopCardCount) shopCardCount.textContent = active.length + ' 件';
-        }
-
-        function applyFilters() {
-          placeChips.forEach(function (chip) {
-            chip.setAttribute('aria-pressed', chip.getAttribute('data-filter') === state.place ? 'true' : 'false');
-          });
-          catChips.forEach(function (chip) {
-            chip.setAttribute('aria-pressed', chip.getAttribute('data-cat') === state.cat ? 'true' : 'false');
-          });
-          if (catCurrent) catCurrent.textContent = state.cat === 'all' ? '全部类型' : state.cat;
-          var isPurchasedView = state.group === 'purchased';
-          if (placeFilter) placeFilter.hidden = isPurchasedView;
-          if (catFilter) catFilter.hidden = isPurchasedView;
-          sections.forEach(function (sec) {
-            var g = sec.getAttribute('data-group');
-            var active = g === state.group;
-            sec.hidden = !active;
-            if (!active || g === 'purchased') return;
-            var items = Array.prototype.slice.call(sec.querySelectorAll('.item'));
-            var visible = 0;
-            items.forEach(function (item) {
-              var id = item.getAttribute('data-id');
-              var gone = id && isGone(id);
-              var bought = id && isPurchased(id);
-              var placeOk = state.place === 'all' || item.getAttribute('data-place') === state.place;
-              var catOk = state.cat === 'all' || item.getAttribute('data-cat') === state.cat;
-              var show = !gone && !bought && placeOk && catOk;
-              item.hidden = !show;
-              if (show) visible++;
-            });
-            var countEl = sec.querySelector('.sec-head .count');
-            if (countEl) countEl.textContent = visible + ' 件';
-            var noneEl = sec.querySelector('.filter-none');
-            if (noneEl) noneEl.hidden = visible !== 0;
-          });
-          renderPurchased();
-          renderCounts();
-        }
-
-        placeChips.forEach(function (chip) {
-          chip.addEventListener('click', function () {
-            state.place = chip.getAttribute('data-filter');
-            applyFilters();
-          });
-        });
-        catChips.forEach(function (chip) {
-          chip.addEventListener('click', function () {
-            state.cat = chip.getAttribute('data-cat');
-            applyFilters();
-          });
-        });
-        if (toggle && panel) {
-          toggle.addEventListener('click', function () {
-            var open = panel.hidden;
-            panel.hidden = !open;
-            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-          });
-        }
-        var wipe = document.getElementById('pageWipe');
-        function cardColor(el) {
-          if (!el) return '#503B27';
-          var c = window.getComputedStyle(el).backgroundColor;
-          return c || '#503B27';
-        }
-        function wipeTo(hideEl, showEl, color, after) {
-          if (!wipe) {
-            hideEl.hidden = true; showEl.hidden = false; window.scrollTo(0, 0);
-            if (after) after();
-            return;
-          }
-          wipe.style.background = color || '#503B27';
-          wipe.classList.remove('away');
-          wipe.classList.add('on');
-          setTimeout(function () {
-            hideEl.hidden = true;
-            showEl.hidden = false;
-            window.scrollTo(0, 0);
-            if (after) after();
-            wipe.classList.remove('on');
-            wipe.classList.add('away');
-            setTimeout(function () { wipe.classList.remove('away'); }, 420);
-          }, 380);
-        }
-        groupCards.forEach(function (card) {
-          card.addEventListener('click', function () {
-            state.group = card.getAttribute('data-group');
-            wipeTo(shopView, groupView, cardColor(card), applyFilters);
-          });
-        });
-        if (backBtn) {
-          backBtn.addEventListener('click', function () {
-            wipeTo(groupView, shopView, '#767C47');
-          });
-        }
-        if (shopBackBtn) {
-          shopBackBtn.addEventListener('click', function () {
-            wipeTo(shopView, homeView, '#503B27');
-          });
-        }
-        if (todoBackBtn) {
-          todoBackBtn.addEventListener('click', function () {
-            wipeTo(todoView, homeView, '#503B27');
-          });
-        }
-
-        document.addEventListener('click', function (e) {
-          var t = e.target;
-          if (!t || !t.closest) return;
-          var buy = t.closest('[data-buy]');
-          if (buy) {
-            var id = buy.getAttribute('data-buy');
-            store.purchased[id] = Date.now();
-            writeJSON(LS_PURCHASED, store.purchased);
-            applyFilters();
-            return;
-          }
-          var res = t.closest('[data-restore]');
-          if (res) {
-            var rid = res.getAttribute('data-restore');
-            delete store.purchased[rid];
-            writeJSON(LS_PURCHASED, store.purchased);
-            applyFilters();
-          }
-        });
-
-        if (clearBtn) {
-          clearBtn.addEventListener('click', function () {
-            var ids = Object.keys(store.purchased);
-            if (!ids.length) return;
-            if (!window.confirm('确定要清空已购清单吗？里面的 ' + ids.length + ' 件东西以后都不会再出现。')) return;
-            ids.forEach(function (id) {
-              delete store.purchased[id];
-              if (store.gone.indexOf(id) === -1) store.gone.push(id);
-            });
-            writeJSON(LS_PURCHASED, store.purchased);
-            writeJSON(LS_GONE, store.gone);
-            applyFilters();
-          });
-        }
-
-        /* ---------- 顶层双模块 & 代办 ---------- */
-        var LS_TODO = 'todo-items-v1';
-        var todos = readJSON(LS_TODO, []);
-        if (!Array.isArray(todos)) todos = [];
-        var todoFilter = 'today';
-        function saveTodos() { writeJSON(LS_TODO, todos); }
-        function todoPending() { return todos.filter(function (t) { return !t.done; }); }
-        function todoTodayPending() { return todos.filter(function (t) { return t.today && !t.done; }); }
-        function renderModuleCounts() {
-          if (todoCardCount) todoCardCount.textContent = todoPending().length + ' 件待办';
-          if (shopCardCount) shopCardCount.textContent = activeItems().length + ' 件';
-          if (todoTodayCount) todoTodayCount.textContent = todoTodayPending().length + ' 件';
-          if (todoAllCount) todoAllCount.textContent = todoPending().length + ' 件';
-        }
-        function renderTodos() {
-          var list = todoFilter === 'today'
-            ? todos.filter(function (t) { return t.today && !t.done; })
-            : todos.slice();
-          if (todoList) {
-            todoList.innerHTML = '';
-            list.forEach(function (t) {
-              var row = document.createElement('div');
-              row.className = 'todo-item' + (t.done ? ' done' : '');
-              var check = document.createElement('button');
-              check.type = 'button';
-              check.className = 'todo-check';
-              check.setAttribute('aria-label', t.done ? '标为未完成' : '标为已完成');
-              check.textContent = t.done ? '✓' : '';
-              check.addEventListener('click', function () {
-                t.done = !t.done;
-                saveTodos(); renderTodos(); renderModuleCounts();
-              });
-              var text = document.createElement('span');
-              text.className = 'todo-text';
-              text.textContent = t.text;
-              var todayBtn = document.createElement('button');
-              todayBtn.type = 'button';
-              todayBtn.className = 'todo-today';
-              todayBtn.setAttribute('aria-pressed', t.today ? 'true' : 'false');
-              todayBtn.textContent = '今天';
-              todayBtn.addEventListener('click', function () {
-                t.today = !t.today;
-                saveTodos(); renderTodos(); renderModuleCounts();
-              });
-              var del = document.createElement('button');
-              del.type = 'button';
-              del.className = 'todo-del';
-              del.setAttribute('aria-label', '删除');
-              del.textContent = '×';
-              del.addEventListener('click', function () {
-                todos = todos.filter(function (x) { return x.id !== t.id; });
-                saveTodos(); renderTodos(); renderModuleCounts();
-              });
-              row.appendChild(check);
-              row.appendChild(text);
-              row.appendChild(todayBtn);
-              row.appendChild(del);
-              todoList.appendChild(row);
-            });
-          }
-          if (todoEmpty) todoEmpty.hidden = list.length !== 0;
-          Array.prototype.slice.call(document.querySelectorAll('[data-todo-view]')).forEach(function (btn) {
-            btn.classList.toggle('active', btn.getAttribute('data-todo-view') === todoFilter);
-          });
-          renderModuleCounts();
-        }
-        function addTodo() {
-          if (!todoInput) return;
-          var v = todoInput.value.replace(/^\s+|\s+$/g, '');
-          if (!v) return;
-          todos.push({ id: Date.now() + '-' + Math.floor(Math.random() * 100000), text: v, done: false, today: todoFilter === 'today', created: Date.now() });
-          todoInput.value = '';
-          saveTodos(); renderTodos();
-        }
-        if (todoAddBtn) todoAddBtn.addEventListener('click', addTodo);
-        if (todoInput) todoInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') addTodo(); });
-        Array.prototype.slice.call(document.querySelectorAll('[data-todo-view]')).forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            todoFilter = btn.getAttribute('data-todo-view');
-            renderTodos();
-          });
-        });
-        Array.prototype.slice.call(document.querySelectorAll('[data-module]')).forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            var m = btn.getAttribute('data-module');
-            var target = (m === 'todo') ? todoView : shopView;
-            wipeTo(homeView, target, cardColor(btn), function () { if (m === 'todo') renderTodos(); });
-          });
-        });
-        renderTodos();
-
-        applyCustomImages();
-        applyFilters();
-      })();
-    </script>
-
-  </body>
+  route();
+})();
+</script>
+</body>
 </html>
