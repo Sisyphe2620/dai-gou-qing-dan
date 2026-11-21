@@ -444,51 +444,30 @@
       .todo-del:hover { color: var(--urgent); }
     </style>
     <style>
-      /* ---------- Casa Chromatica × BRAVE 视觉重设计（2026-11-20） ---------- */
+      /* ---------- Earth × BRAVE 视觉重设计（2026-11-20） ---------- */
       :root {
-        --cream: #F3E8CF;
-        --ruby: #852E47;
-        --indigo: #0D244D;
-        --moss: #4A5A30;
-        --nectar: #C2441C;
-        --bg: #F3E8CF;
-        --surface: #FBF6E9;
-        --surface-2: #EADFC3;
-        --ink: #0D244D;
-        --ink-2: #46586E;
-        --ink-3: #9A8F7A;
-        --line: #D8C9A8;
-        --urgent: #852E47;
-        --urgent-soft: #F6E3E6;
-        --watch: #4A5A30;
-        --watch-soft: #E9EDDC;
-        --gold: #C2441C;
-        --gold-soft: #FBE7D8;
-        --shadow: 0 1px 2px rgba(13,36,77,.06), 0 12px 30px -16px rgba(13,36,77,.28);
+        /* Earth 调色板（VectorSVG）：Walnut 胡桃棕 #503B27 / Moss 苔藓绿 #767C47 / Copper 古铜橙 #C06A33 / Vicuña Tan 驼色 #CDAB6E / Oat Milk 燕麦奶油 #E6DAC9 */
+        --cream: #E6DAC9;
+        --ruby: #C06A33;
+        --indigo: #503B27;
+        --moss: #767C47;
+        --nectar: #CDAB6E;
+        --bg: #E6DAC9;
+        --surface: #F6EEDD;
+        --surface-2: #DCCFB2;
+        --ink: #503B27;
+        --ink-2: #6B5A44;
+        --ink-3: #8A765C;
+        --line: #CFC0A4;
+        --urgent: #C06A33;
+        --urgent-soft: #F3E2D3;
+        --watch: #767C47;
+        --watch-soft: #E9EAD9;
+        --gold: #C06A33;
+        --gold-soft: #F3E2D3;
+        --shadow: 0 1px 2px rgba(80,59,39,.08), 0 12px 30px -16px rgba(80,59,39,.30);
       }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --cream: #F3E8CF;
-          --ruby: #A63A52;
-          --indigo: #1B3A66;
-          --moss: #6B8A4A;
-          --nectar: #D95D2B;
-          --bg: #0D244D;
-          --surface: #16305C;
-          --surface-2: #1E3A66;
-          --ink: #F3E8CF;
-          --ink-2: #C9BFA5;
-          --ink-3: #8A97A8;
-          --line: #2A4A73;
-          --urgent: #C13B57;
-          --urgent-soft: #3A1F2E;
-          --watch: #8AA86A;
-          --watch-soft: #22331E;
-          --gold: #E86A33;
-          --gold-soft: #3A2415;
-          --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.7);
-        }
-      }
+      /* Earth 调色板为浅色主题，不再跟随系统深色模式切换。 */
       /* 标题区：实色 hero 色块 */
       .intro {
         background: var(--indigo);
@@ -497,7 +476,7 @@
         margin-bottom: 22px;
       }
       .intro h1 { color: var(--cream); }
-      .intro p { color: rgba(243,232,207,.88); }
+      .intro p { color: rgba(230,218,201,.88); }
       .intro p b { color: var(--cream); }
       #todoView .intro { background: var(--ruby); }
       #shopView .intro { background: var(--moss); }
@@ -507,7 +486,7 @@
       .stat.urgent { background: var(--ruby); border-color: var(--ruby); }
       .stat.watch { background: var(--moss); border-color: var(--moss); }
       .stat .num { color: var(--cream); }
-      .stat .lbl { color: rgba(243,232,207,.85); }
+      .stat .lbl { color: rgba(230,218,201,.85); }
       .stat.urgent .num, .stat.watch .num { color: var(--cream); }
       /* 模块卡 / 分组卡：实色色块 + 米白字 */
       .group-card { border-radius: 18px; padding: 28px 22px 20px; }
@@ -516,46 +495,36 @@
       .group-card[data-todo-view="today"] { background: var(--nectar); border-color: var(--nectar); color: var(--cream); }
       .group-card[data-todo-view="all"], .group-card[data-group="watch"] { background: var(--moss); border-color: var(--moss); color: var(--cream); }
       .group-card[data-module] .gc-title, .group-card[data-group] .gc-title, .group-card[data-todo-view] .gc-title { color: var(--cream); }
-      .group-card[data-module] .gc-desc, .group-card[data-group] .gc-desc, .group-card[data-todo-view] .gc-desc { color: rgba(243,232,207,.85); }
+      .group-card[data-module] .gc-desc, .group-card[data-group] .gc-desc, .group-card[data-todo-view] .gc-desc { color: rgba(230,218,201,.85); }
       .group-card[data-module] .gc-count, .group-card[data-group] .gc-count, .group-card[data-todo-view] .gc-count,
-      .group-card[data-module] .gc-arrow, .group-card[data-group] .gc-arrow, .group-card[data-todo-view] .gc-arrow { color: rgba(243,232,207,.9); }
+      .group-card[data-module] .gc-arrow, .group-card[data-group] .gc-arrow, .group-card[data-todo-view] .gc-arrow { color: rgba(230,218,201,.9); }
       .group-card.active { border-color: var(--cream); box-shadow: 0 0 0 3px var(--cream), 0 0 0 6px var(--ink); }
       /* 待办操作按钮 */
       .todo-add-btn { background: var(--ruby); border-color: var(--ruby); color: var(--cream); }
       .todo-item.done .todo-check { background: var(--moss); border-color: var(--moss); }
+      /* “今天代办”卡是浅驼色，配深胡桃字才看得清 */
+      .group-card[data-todo-view="today"] { color: #503B27; }
+      .group-card[data-todo-view="today"] .gc-title { color: #503B27; }
+      .group-card[data-todo-view="today"] .gc-desc { color: rgba(80,59,39,.78); }
+      .group-card[data-todo-view="today"] .gc-count, .group-card[data-todo-view="today"] .gc-arrow { color: rgba(80,59,39,.85); }
     </style>
     <style>
       /* ===== 第三轮：暗色叶背景 + 层叠按钮 + 滑入动效 + 设计字体 ===== */
-      body::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        background: #0B1B38 url('assets/media-generation-bg-dark-leaves-0-9b206511-a153-4ae0-921e-5482a698ac3b.jpg') center top / cover no-repeat;
-        pointer-events: none;
-      }
-      body::after {
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        background: linear-gradient(180deg, rgba(9,22,45,.42), rgba(9,22,45,.60) 55%, rgba(9,22,45,.75));
-        pointer-events: none;
-      }
+      /* Earth 调色板：暗色叶背景已去掉，页面底色就是燕麦奶油 #E6DAC9（见 --bg）。 */
       .wrap { position: relative; z-index: 1; }
 
       /* 层叠按钮：每张彩卡身后露出一层对比色，像参考图二那样上下叠着 */
       .group-card { transition: transform .15s, border-color .15s, box-shadow .15s; }
-      .group-card[data-module="todo"], .group-card[data-group="urgent"] { --layer: #0D244D; }
-      .group-card[data-module="shop"], .group-card[data-group="purchased"] { --layer: #852E47; }
-      .group-card[data-todo-view="today"] { --layer: #4A5A30; }
-      .group-card[data-todo-view="all"], .group-card[data-group="watch"] { --layer: #C2441C; }
-      .group-card { box-shadow: 7px 7px 0 var(--layer, rgba(13,36,77,.28)), var(--shadow); }
-      .group-card:active { transform: translate(4px, 4px); box-shadow: 3px 3px 0 var(--layer, rgba(13,36,77,.28)), var(--shadow); }
-      .group-card.active { box-shadow: 7px 7px 0 var(--layer, rgba(13,36,77,.28)), var(--shadow); outline: 3px solid var(--cream); outline-offset: 3px; }
+      .group-card[data-module="todo"], .group-card[data-group="urgent"] { --layer: #503B27; }
+      .group-card[data-module="shop"], .group-card[data-group="purchased"] { --layer: #C06A33; }
+      .group-card[data-todo-view="today"] { --layer: #767C47; }
+      .group-card[data-todo-view="all"], .group-card[data-group="watch"] { --layer: #CDAB6E; }
+      .group-card { box-shadow: 7px 7px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow); }
+      .group-card:active { transform: translate(4px, 4px); box-shadow: 3px 3px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow); }
+      .group-card.active { box-shadow: 7px 7px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow); outline: 3px solid #503B27; outline-offset: 3px; }
 
       /* 页面切换：点的那块颜色先滑上来盖住，再淡出露出下一页 */
-      #pageWipe { position: fixed; inset: 0; z-index: 999; pointer-events: none; background: #0D244D; opacity: 0; transform: translateY(100%); transition: transform .38s cubic-bezier(.32,.72,.35,1), opacity .38s ease; }
+      #pageWipe { position: fixed; inset: 0; z-index: 999; pointer-events: none; background: #503B27; opacity: 0; transform: translateY(100%); transition: transform .38s cubic-bezier(.32,.72,.35,1), opacity .38s ease; }
       #pageWipe.on { opacity: 1; transform: translateY(0); }
       #pageWipe.away { opacity: 0; transform: translateY(-100%); }
 
@@ -1078,9 +1047,9 @@
         }
         var wipe = document.getElementById('pageWipe');
         function cardColor(el) {
-          if (!el) return '#0D244D';
+          if (!el) return '#503B27';
           var c = window.getComputedStyle(el).backgroundColor;
-          return c || '#0D244D';
+          return c || '#503B27';
         }
         function wipeTo(hideEl, showEl, color, after) {
           if (!wipe) {
@@ -1088,7 +1057,7 @@
             if (after) after();
             return;
           }
-          wipe.style.background = color || '#0D244D';
+          wipe.style.background = color || '#503B27';
           wipe.classList.remove('away');
           wipe.classList.add('on');
           setTimeout(function () {
@@ -1109,17 +1078,17 @@
         });
         if (backBtn) {
           backBtn.addEventListener('click', function () {
-            wipeTo(groupView, shopView, '#4A5A30');
+            wipeTo(groupView, shopView, '#767C47');
           });
         }
         if (shopBackBtn) {
           shopBackBtn.addEventListener('click', function () {
-            wipeTo(shopView, homeView, '#0D244D');
+            wipeTo(shopView, homeView, '#503B27');
           });
         }
         if (todoBackBtn) {
           todoBackBtn.addEventListener('click', function () {
-            wipeTo(todoView, homeView, '#0D244D');
+            wipeTo(todoView, homeView, '#503B27');
           });
         }
 
