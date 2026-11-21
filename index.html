@@ -544,7 +544,7 @@
         --shadow-soft: 0 2px 4px rgba(80,59,39,.06), 0 18px 36px -18px rgba(80,59,39,.28);
       }
 
-      /* ---------- Hero：绿底大圆角 + 弧形收边 + 植物圆片 ---------- */
+      /* ---------- Hero：绿底大圆角 + 弧形收边 + 主题插画 ---------- */
       .intro {
         position: relative;
         overflow: hidden;
@@ -571,19 +571,16 @@
       }
       .intro p { color: rgba(255,255,255,.93); max-width: 25em; }
       .intro p b { color: #fff; }
-      .hero-plant {
+      .hero-deco {
         position: absolute;
         top: 20px;
         right: 22px;
         width: 148px;
         height: 148px;
-        border-radius: 50%;
-        overflow: hidden;
-        border: 5px solid rgba(255,255,255,.9);
-        box-shadow: 0 10px 24px -8px rgba(30,45,25,.45);
         pointer-events: none;
+        filter: drop-shadow(0 10px 16px rgba(30,45,25,.35));
       }
-      .hero-plant img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+      .hero-deco svg { display: block; width: 100%; height: 100%; }
 
       /* ---------- 编号：卡片 01/02/03 + 分区标题 01/02/03 ---------- */
       .gc-num {
@@ -657,7 +654,7 @@
         #todoView .intro { border-radius: 28px 28px 28px 84px / 28px 28px 28px 60px; }
         .intro h1 { font-size: clamp(30px, 8vw, 38px); }
         .intro p { max-width: calc(100% - 84px); font-size: 14px; }
-        .hero-plant { width: 76px; height: 76px; top: 14px; right: 14px; border-width: 3px; }
+        .hero-deco { width: 76px; height: 76px; top: 14px; right: 14px; }
         .group-card { min-height: 0; padding: 22px 20px 18px; }
         .gc-num { font-size: 34px; }
         .gc-title { font-size: 26px; }
@@ -670,7 +667,20 @@
       <div id="homeView">
       <div class="intro">
         <h1>我的代办事项</h1>
-        <span class="hero-plant" aria-hidden="true"><img src="assets/hero-plant.jpg" alt=""></span>
+        <span class="hero-deco" aria-hidden="true"><svg viewBox="0 0 148 148" fill="none">
+          <rect x="6" y="6" width="136" height="136" rx="28" fill="#FBF7EC"/>
+          <circle cx="38" cy="38" r="13" fill="#5E7A55"/>
+          <path d="M31.5 38.5 36.5 43.5 45 34" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="62" y="31" width="58" height="7" rx="3.5" fill="#D8DCC4"/>
+          <rect x="62" y="44" width="38" height="7" rx="3.5" fill="#E7EAD8"/>
+          <circle cx="38" cy="74" r="13" fill="#5E7A55"/>
+          <path d="M31.5 74.5 36.5 79.5 45 70" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="62" y="67" width="58" height="7" rx="3.5" fill="#D8DCC4"/>
+          <rect x="62" y="80" width="48" height="7" rx="3.5" fill="#E7EAD8"/>
+          <circle cx="38" cy="110" r="13" fill="none" stroke="#8A765C" stroke-width="3"/>
+          <rect x="62" y="103" width="58" height="7" rx="3.5" fill="#D8DCC4"/>
+          <rect x="62" y="116" width="30" height="7" rx="3.5" fill="#E7EAD8"/>
+        </svg></span>
         <p>两件事放在一起：<b>代办事项</b>是今天要做的事和全部待办；<b>购物清单</b>是想买还没下单的东西。点下面的模块进去。</p>
       </div>
 
@@ -696,7 +706,13 @@
       </div>
       <div class="intro">
         <h1>代办事项</h1>
-        <span class="hero-plant" aria-hidden="true"><img src="assets/hero-plant.jpg" alt=""></span>
+        <span class="hero-deco" aria-hidden="true"><svg viewBox="0 0 148 148" fill="none">
+          <rect x="6" y="6" width="136" height="136" rx="28" fill="#FBF7EC"/>
+          <circle cx="74" cy="60" r="34" fill="#5E7A55"/>
+          <path d="M57 61 69 73 93 47" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="48" y="110" width="52" height="7" rx="3.5" fill="#D8DCC4"/>
+          <rect x="58" y="124" width="32" height="7" rx="3.5" fill="#E7EAD8"/>
+        </svg></span>
         <p>下面写一条要做的事，点「今天」就进<b>今天代办</b>。做完了打勾，今天代办里就不再显示；不要了点 × 删掉。</p>
       </div>
 
@@ -732,7 +748,17 @@
       </div>
       <div class="intro">
         <h1>想买，还没下单的</h1>
-        <span class="hero-plant" aria-hidden="true"><img src="assets/hero-plant.jpg" alt=""></span>
+        <span class="hero-deco" aria-hidden="true"><svg viewBox="0 0 148 148" fill="none">
+          <rect x="6" y="6" width="136" height="136" rx="28" fill="#FBF7EC"/>
+          <circle cx="74" cy="48" r="8" fill="#CDAB6E"/>
+          <path d="M60 66 V54 C60 44 66 38 74 38 C82 38 88 44 88 54 V66" stroke="#42563D" stroke-width="5" stroke-linecap="round"/>
+          <path d="M46 66 H102 L97 116 Q96.5 124 88 124 H60 Q51.5 124 51 116 Z" fill="#5E7A55"/>
+          <path d="M48 82 H100" stroke="#fff" stroke-opacity=".28" stroke-width="2" stroke-linecap="round"/>
+          <g transform="rotate(15 106 74)">
+            <rect x="95" y="66" width="24" height="15" rx="4" fill="#C06A33"/>
+            <circle cx="100" cy="73.5" r="2.2" fill="#FBF7EC"/>
+          </g>
+        </svg></span>
         <p>这张清单收着所有<b>计划代购、还没买</b>的东西，分成两类：<b>待购买</b>的近期就要买；<b>等折扣</b>的不急，盯着价格，降了再出手。点下面的板块进去，看每一类都有些什么。买好了的点「已购买」，会进「已购清单」，7 天内还能恢复。</p>
       </div>
 
