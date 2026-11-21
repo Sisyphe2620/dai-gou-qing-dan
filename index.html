@@ -211,46 +211,83 @@ button{font-family:inherit}
   function back(href,label){return '<a class="back" href="'+href+'">‹ '+label+'</a>'}
 
   /* ---------- sound (synthesised, no files) ---------- */
-  var sfxOn=load('sfx-v1',true)!==false,AC=null,master=null,nbuf=null;
+  var sfxOn=load('sfx-v1',true)!==false,AC=null,master=null,warmBus=null,nbuf=null;
   function ac(){
     if(AC===false)return null;
-    if(!AC){try{var C=window.AudioContext||window.webkitAudioContext;AC=new C();master=AC.createGain();master.gain.value=.25;master.connect(AC.destination)}catch(e){AC=false;return null}}
+    if(!AC){try{
+      var C=window.AudioContext||window.webkitAudioContext;AC=new C();
+      /* Warm chain, same family as the diet page: voices -> master ->
+         gentle lowpass (1600Hz — a touch more air than the diet
+         page's 1400Hz, so it never sounds muffled) -> out, plus a
+         light feedback-delay send for a soft sense of space. */
+      master=AC.createGain(); master.gain.value=.9;
+      warmBus=AC.createBiquadFilter(); warmBus.type='lowpass'; warmBus.frequency.value=1600; warmBus.Q.value=.3;
+      master.connect(warmBus); warmBus.connect(AC.destination);
+      var dly=AC.createDelay(1); dly.delayTime.value=.22;
+      var fb=AC.createGain(); fb.gain.value=.22;
+      var fbTone=AC.createBiquadFilter(); fbTone.type='lowpass'; fbTone.frequency.value=1100;
+      var wet=AC.createGain(); wet.gain.value=.12;
+      master.connect(dly); dly.connect(fbTone); fbTone.connect(fb);
+      fb.connect(dly); dly.connect(wet); wet.connect(AC.destination);
+    }catch(e){AC=false;return null}}
     if(AC.state==='suspended'){try{AC.resume()}catch(e){}}
     return AC;
   }
+  /* One soft singing-bowl-like voice: slow linear swell, then a long
+     exponential fade. Fundamental plus a very quiet octave, so it
+     stays warm with no bright ringing. `type` is kept for call-site
+     compatibility and always renders as sine partials. */
   function tone(f,t0,dur,type,vol,f2){
     var a=sfxOn&&ac(); if(!a)return;
-    var o=a.createOscillator(),g=a.createGain(),t=a.currentTime+(t0||0);
-    o.type=type||'sine'; o.frequency.setValueAtTime(f,t);
-    if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
-    var atk=Math.min(.008,Math.max(.002,dur*.2));
-    g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol||.15,t+atk); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+.05);
+    var t=a.currentTime+(t0||0);
+    var voice=a.createGain();
+    var atk=Math.min(.25,Math.max(.08,dur*.35));
+    voice.gain.setValueAtTime(.0001,t);
+    voice.gain.linearRampToValueAtTime(vol||.13,t+atk);
+    voice.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    voice.connect(master);
+    var parts=[[1,1],[2,.1]];
+    for(var i=0;i<parts.length;i++){
+      var o=a.createOscillator(),og=a.createGain();
+      o.type='sine';
+      o.frequency.setValueAtTime(f*parts[i][0],t);
+      if(f2)o.frequency.exponentialRampToValueAtTime(f2*parts[i][0],t+dur);
+      og.gain.value=parts[i][1];
+      o.connect(og); og.connect(voice);
+      o.start(t); o.stop(t+dur+.1);
+    }
   }
+  /* Soft breath: noise through a gentle lowpass sweep, slow swell,
+     long fade — a quiet exhale, never a click or hiss. */
   function noise(t0,dur,f1,f2,vol,q){
     var a=sfxOn&&ac(); if(!a)return;
     if(!nbuf){nbuf=a.createBuffer(1,a.sampleRate,a.sampleRate);var d=nbuf.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1}
     var s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(t0||0);
-    s.buffer=nbuf; s.loop=true; f.type='bandpass'; f.Q.value=q||1.2;
+    s.buffer=nbuf; s.loop=true; f.type='lowpass'; f.Q.value=.4;
     f.frequency.setValueAtTime(f1,t); f.frequency.exponentialRampToValueAtTime(f2,t+dur);
-    var atk=Math.min(.004,Math.max(.001,dur*.25));
-    g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(Math.min(vol,.08),t+atk); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+dur+.05);
+    var atk=Math.min(.2,Math.max(.05,dur*.4));
+    g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(Math.min(vol,.06),t+atk); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+dur+.1);
   }
+  /* Warm singing-bowl family, same recipe as the diet page (slow
+     swell, long tail, quiet octave, warm lowpass + light delay) but
+     a different pitch set — C5/G4/E5/D5/B4 instead of the diet
+     page's A4/E4 — so it feels related, not identical. UI sounds
+     run 0.8–1.2s, shorter than the diet page's 1.9s. */
   var SFX={
-    pop:function(){tone(520,0,.09,'sine',.2,660);noise(0,.015,3000,3000,.04,1.5)},
-    done:function(){tone(660,0,.08,'triangle',.18);tone(880,.06,.12,'triangle',.16);noise(0,.012,3200,3200,.04,1.5);noise(.06,.012,3400,3400,.035,1.5)},
-    undo:function(){tone(520,0,.08,'sine',.15,392);noise(0,.012,3000,3000,.035,1.5)},
-    tick:function(){noise(0,.012,3500,2500,.06,2);tone(1200,0,.03,'sine',.05)},
-    nav:function(){tone(440,0,.08,'sine',.12,560);noise(0,.012,3000,3000,.03,1.5)},
-    paper:function(){noise(0,.06,1200,2400,.05,1)},
-    del:function(){tone(220,0,.12,'sine',.18,140);noise(0,.02,400,300,.05,1)},
-    buy:function(){tone(880,0,.09,'sine',.18);tone(1318,.09,.14,'sine',.16);noise(0,.012,3400,3400,.04,1.5);noise(.09,.012,3600,3600,.035,1.5)},
-    restore:function(){tone(784,0,.08,'sine',.15);tone(659,.07,.11,'sine',.14);noise(0,.012,3200,3200,.035,1.5)},
-    clear:function(){tone(420,0,.12,'sine',.14,280);noise(0,.04,900,600,.04,1)},
-    shutter:function(){noise(0,.012,3200,2800,.07,2);noise(.06,.012,3200,2800,.06,2);tone(500,0,.03,'sine',.06)},
-    unfold:function(d){noise(0,d,900,2200,.05,1)},
-    fold:function(d){noise(0,d,2200,900,.05,1)}
+    pop:function(){tone(523.25,0,.9,'sine',.14,587.33)},
+    done:function(){tone(523.25,0,1,'sine',.13);tone(659.25,.18,1,'sine',.11)},
+    undo:function(){tone(659.25,0,1,'sine',.12,523.25)},
+    tick:function(){tone(587.33,0,.8,'sine',.10)},
+    nav:function(){tone(392,0,1,'sine',.12,523.25)},
+    paper:function(){noise(0,.5,900,1800,.05,1)},
+    del:function(){tone(392,0,1.1,'sine',.13,293.66)},
+    buy:function(){tone(523.25,0,1.1,'sine',.13);tone(659.25,.15,1.1,'sine',.12);tone(783.99,.3,1.2,'sine',.11)},
+    restore:function(){tone(392,0,1,'sine',.12);tone(523.25,.15,1,'sine',.11)},
+    clear:function(){tone(587.33,0,1.1,'sine',.12,493.88)},
+    shutter:function(){tone(659.25,0,.8,'sine',.12);tone(587.33,.12,.9,'sine',.10)},
+    unfold:function(d){tone(523.25,0,d,'sine',.11,659.25);noise(0,d,700,2000,.04,1)},
+    fold:function(d){tone(659.25,0,d,'sine',.11,523.25);noise(0,d,2000,700,.04,1)}
   };
   function sfx(n,a){if(sfxOn&&SFX[n])SFX[n](a)}
   document.addEventListener('pointerdown',function(){if(sfxOn)ac()},{passive:true});
