@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的代办事项</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a phone-width column of flat colour bands; the open band unfolds its list like creased paper. */
+:root{
+  --paper:#F8F3EA; --card:#FFFFFF; --ink:#3A2B25; --ink-2:#6F5F55; --line:#E4DAC9; --crease:#EBE0CF;
+  --gold:#F4B13B; --clay:#E0745E; --sand:#F2E6D6; --on-clay:#2A1A15;
+  --display:'Jost','Noto Sans SC',system-ui,sans-serif;
+  --body:'Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#E9DFCE;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;color-scheme:light;-webkit-text-size-adjust:100%}
+.app{max-width:520px;min-height:100%;margin:0 auto;background:var(--paper);box-shadow:0 0 0 1px rgba(58,43,37,.06),0 24px 70px rgba(58,43,37,.14)}
+.app.enter{animation:enter .3s ease-out}
+@keyframes enter{from{opacity:0}to{opacity:1}}
+a{color:inherit}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* hero */
+.hero{padding:18px 20px 28px;display:flex;flex-direction:column;gap:14px}
+.hero h1{margin:0;font-size:30px;line-height:1.25;font-weight:700;letter-spacing:.02em;text-wrap:balance}
+.hero p{margin:0;font-size:15px;line-height:1.75;max-width:34em}
+.hero-sand{background:var(--sand);color:var(--ink)}
+.hero-gold{background:var(--gold);color:var(--ink)}
+.hero-clay{background:var(--clay);color:var(--on-clay)}
+.back{align-self:flex-start;text-decoration:none;font-weight:500;font-size:15px;min-height:44px;display:inline-flex;align-items:center;margin:-6px 0 -2px -8px;padding:0 8px}
+.stamp{display:flex;flex-direction:column;font-family:var(--display);padding-top:6px}
+.stamp small{font-size:13px;letter-spacing:.16em;font-weight:500}
+.stamp b{font-size:76px;line-height:.95;font-weight:300;font-variant-numeric:tabular-nums}
+
+/* bands */
+.band{display:flex;align-items:center;gap:18px;width:100%;min-height:96px;padding:20px;border:0;text-align:left;font:inherit;color:var(--ink);text-decoration:none;cursor:pointer;position:relative}
+.band .num{font-family:var(--display);font-weight:300;font-size:46px;line-height:1;min-width:2ch;font-variant-numeric:tabular-nums}
+.band h2{margin:0;font-size:19px;font-weight:700;letter-spacing:.04em}
+.band p{margin:3px 0 0;font-size:13px;line-height:1.45}
+.band .bar{margin-left:auto;flex:none;height:14px;background:rgba(255,255,255,.62);transition:width .3s}
+.c-gold{background:var(--gold)}
+.c-sand{background:var(--sand);box-shadow:inset 0 1px 0 rgba(58,43,37,.14),inset 0 -1px 0 rgba(58,43,37,.14)}
+.c-sand .bar{background:var(--clay)}
+.c-clay{background:var(--clay);color:var(--on-clay)}
+.c-clay .bar{background:rgba(255,255,255,.55)}
+.fold-band{touch-action:none;user-select:none;-webkit-user-select:none}
+.fold-band::before{content:"";position:absolute;left:50%;bottom:7px;width:44px;height:4px;margin-left:-22px;background:currentColor;opacity:.3;border-radius:2px;transition:opacity .2s}
+.fold-band[aria-expanded="true"]::before{opacity:.55}
+
+/* add box */
+.add{display:flex;gap:10px;padding:14px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.add input{flex:1;min-width:0;height:48px;border:2px solid var(--line);border-radius:0;padding:0 12px;font:inherit;background:var(--paper);color:var(--ink)}
+.add input:focus{outline:none;border-color:var(--ink)}
+.add button{flex:none;height:48px;padding:0 18px;border:0;background:var(--ink);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+
+/* folded list */
+.panel{background:#fff;overflow:hidden}
+.fold{transform-origin:50% 0;backface-visibility:hidden}
+.fold-row{display:flex;align-items:center;gap:4px;min-height:64px;padding:6px 6px 6px 8px;transform-origin:50% 0}
+.fold-row:nth-child(odd){background:linear-gradient(#fff 0%,var(--crease) 100%)}
+.fold-row:nth-child(even){background:linear-gradient(var(--crease) 0%,#fff 100%)}
+.check{flex:none;width:48px;height:48px;border:0;background:none;cursor:pointer;display:grid;place-items:center;padding:0}
+.check i{width:26px;height:26px;border:2px solid var(--ink);border-radius:50%;display:grid;place-items:center;color:transparent;font-style:normal;font-size:14px;font-weight:700}
+.done .check i{background:var(--ink);border-color:var(--ink);color:var(--sand)}
+.t{flex:1;min-width:0;font-size:16px;line-height:1.45;overflow-wrap:anywhere;padding:4px 0}
+.done .t{text-decoration:line-through;color:#8C9A96}
+.today-btn{flex:none;height:34px;padding:0 12px;border:2px solid #D8CCB8;background:#fff;color:var(--ink-2);font-size:13px;font-weight:700;cursor:pointer}
+.today-btn.on{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.del{flex:none;width:44px;height:44px;border:0;background:none;font-size:26px;line-height:1;color:var(--ink-2);cursor:pointer}
+.empty{padding:44px 24px;text-align:center;display:grid;gap:8px;background:#fff}
+.empty strong{font-size:22px;font-weight:700}
+.empty span{font-size:14px;color:var(--ink-2);line-height:1.7}
+
+/* shopping */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-bottom:1px solid var(--line)}
+.stats div{padding:16px 8px;text-align:center;display:grid;gap:2px}
+.stats div+div{border-left:1px solid var(--line)}
+.stats b{font-family:var(--display);font-weight:300;font-size:42px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stats span{font-size:13px;color:var(--ink-2)}
+.filters{padding:14px 16px 12px;background:#fff;border-bottom:1px solid var(--line);display:grid;gap:10px}
+.fl{display:flex;gap:10px;align-items:center;min-width:0}
+.fl .lab{flex:none;font-size:12px;color:var(--ink-2);width:4.2em;line-height:1.3}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 2px 0;min-width:0}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:36px;padding:0 14px;border:2px solid var(--line);background:#fff;font-size:14px;color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.card{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;padding:16px;background:#fff;border-bottom:1px solid var(--line)}
+.card:nth-child(odd){background:linear-gradient(#fff 0%,var(--crease) 100%)}
+.card:nth-child(even){background:linear-gradient(var(--crease) 0%,#fff 100%)}
+.pic{width:104px;aspect-ratio:3/4;border:0;padding:0;background:var(--paper);cursor:pointer;overflow:hidden;align-self:start}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.ph{display:grid;place-items:center;align-content:center;gap:6px;height:100%;color:var(--ink-2);font-size:12px;font-weight:500}
+.info h3{margin:0 0 6px;font-size:16px;line-height:1.4;font-weight:700;overflow-wrap:anywhere}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tag{font-size:12px;font-weight:500;padding:1px 8px;background:var(--paper);color:var(--ink)}
+.tag.place{background:var(--ink);color:#fff}
+.tag.status{background:var(--gold);color:var(--ink)}
+.price{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 6px}
+.note{font-size:13.5px;line-height:1.65;color:var(--ink-2);margin:0 0 8px}
+.meta{display:grid;gap:2px;margin:0 0 10px;font-size:12.5px;line-height:1.5}
+.meta div{display:flex;gap:8px}
+.meta dt{color:var(--ink-2);flex:none}
+.meta dd{margin:0;font-weight:500}
+.link{display:inline-block;margin-bottom:10px;font-weight:700;font-size:14px;text-underline-offset:3px;text-decoration-color:var(--clay);text-decoration-thickness:2px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.act{height:40px;padding:0 16px;border:0;background:var(--gold);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer}
+.act.ghost{background:#fff;border:2px solid var(--clay);color:#9A3F2B}
+.clearbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.nomatch{padding:28px 20px;background:#fff;text-align:center;color:var(--ink-2);font-size:14px}
+.howto{padding:28px 20px 44px;background:var(--sand);color:var(--ink);box-shadow:inset 0 1px 0 rgba(58,43,37,.14);margin-top:0}
+.howto h4{margin:0 0 8px;font-size:15px;letter-spacing:.08em}
+.howto p{margin:0;font-size:14px;line-height:1.85}
+.home-bands{display:grid}
+.sfx{position:fixed;right:max(12px,calc(50% - 248px));bottom:16px;width:44px;height:44px;border:2px solid var(--ink);background:var(--card);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0;z-index:9}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:min(440px,calc(100% - 32px));background:var(--ink);color:#fff;padding:12px 16px;font-size:14px;line-height:1.5;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .app.enter{animation:none}
+  .band .bar,.toast{transition:none}
+}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<input type="file" id="imgInput" accept="image/*" hidden>
+<button type="button" id="sfxBtn" class="sfx"></button>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var DAY=86400000;
+  var HOWTO='直接语音告诉我想买什么、急不急、有没有目标价，要去某个地方买的也一并说（比如「去 Costco 买」），我就更新到这张清单上，并标好购买地点。买好了点卡片上的「已购买」，东西会进「已购清单」，7 天内可以恢复，超过 7 天自动删除；已购清单里的「清空」会一次删掉里面的全部东西。';
+
+  var ITEMS=[
+    {id:'metal-basin',cat:'buy',name:'金属带孔盆',place:'宜家',type:'厨具类',price:'待定',note:'去宜家买，具体款式和价格到店再定。'},
+    {id:'snake-base',cat:'buy',name:'1/144 蛇骨磁吸底座支架（HG / RG 高达手办造型支架）',place:'淘宝',type:'玩具类',price:'待定',note:'1/144 比例蛇骨磁吸底座，给 HG / RG 高达手办摆造型、凹造型用。',link:'https://e.tb.cn/h.jndEh1dzYQU36P9?tk=3xEM6UbZsxS'},
+    {id:'sand-grass',cat:'buy',name:'沙盘模型草皮（建筑模型 / 微景观草地造景 DIY 草坪）',place:'淘宝',type:'玩具类',price:'待定',note:'做建筑模型、室外微景观的草地草皮，DIY 手工模型造景用。',link:'https://e.tb.cn/h.jO0R4uAUsYodsNE?tk=aOyx6UbccXi'},
+    {id:'gundam-stand',cat:'buy',name:'高达落地支架',place:'淘宝',type:'玩具类',price:'待定',note:'高达模型落地展示支架。'},
+    {id:'black-cap',cat:'buy',name:'黑色棒球帽',type:'日用品',price:'待定',note:'Boxing Day（12 月 26 日）买一顶黑色棒球帽，款式和价格到时再定。',when:'Boxing Day'},
+    {id:'stormtrooper',cat:'wait',name:'星战 50 周年黑系列 风暴兵 Kenner 复古卡版',type:'玩具类',price:'未定价',status:'等开订',next:'2026-11-23',img:'assets/stormtrooper-kenner.jpg',note:'还没开预购，预计 2027 年才上架（美国 Target / Walmart / Disney Store，海外走 Fan Channel）。普通金卡版已开预购，29.99 美元，2027 年春季发售。'},
+    {id:'inart-batman',cat:'wait',name:'INART 绝对蝙蝠侠',type:'玩具类',price:'未定价',status:'等预售',next:'约 2026-12-05',img:'assets/batman-inart.jpg',note:'原型已于 2026 年 10 月 3–4 日在上海 Wonder Festival 展出，暂无官宣、无售价、无淘宝预售。'}
+  ];
+  var PLACES=['宜家','淘宝'];
+  var TYPES=['玩具类','工具类','厨具类','日用品','食物'];
+
+  /* ---------- storage ---------- */
+  var K={todo:'todo-items-v1',bought:'daigou-purchased-v1',gone:'daigou-gone-v1',img:'daigou-img-v1'};
+  function load(k,fb){try{var r=localStorage.getItem(k);if(r!==null)return JSON.parse(r)}catch(e){}return fb}
+  function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+  function isObj(v){return v&&typeof v==='object'&&!Array.isArray(v)}
+  var todos=load(K.todo,[]); if(!Array.isArray(todos))todos=[];
+  var bought=load(K.bought,{}); if(!isObj(bought))bought={};
+  var gone=load(K.gone,[]); if(!Array.isArray(gone))gone=[];
+  var imgs=load(K.img,{}); if(!isObj(imgs))imgs={};
+
+  /* 旧版商品 id → 新版 id 映射（2026-11-21 换版时保留已购/换图数据） */
+  (function(){
+    var MAP={'basin':'metal-basin','gundam-snake-stand':'snake-base','model-grass':'sand-grass','gundam-floor-stand':'gundam-stand','black-baseball-cap':'black-cap','stormtrooper-kenner':'stormtrooper','batman-inart':'inart-batman'};
+    var changed=false;
+    Object.keys(MAP).forEach(function(old){
+      var nw=MAP[old];
+      if(old in bought){bought[nw]=bought[old];delete bought[old];changed=true}
+      var gi=gone.indexOf(old);
+      if(gi>=0){gone.splice(gi,1);if(gone.indexOf(nw)<0)gone.push(nw);changed=true}
+      if(old in imgs){imgs[nw]=imgs[old];delete imgs[old];changed=true}
+    });
+    if(changed){save(K.bought,bought);save(K.gone,gone);save(K.img,imgs)}
+  })();
+
+  function expire(){
+    var now=Date.now(),changed=false;
+    Object.keys(bought).forEach(function(id){
+      if(now-bought[id]>7*DAY){ if(gone.indexOf(id)<0)gone.push(id); delete bought[id]; changed=true; }
+    });
+    if(changed){save(K.bought,bought);save(K.gone,gone)}
+  }
+  expire();
+
+  /* ---------- helpers ---------- */
+  var ui={place:'all',type:'all'};
+  var isOpen={today:false,all:true,'sec-buy':true,'sec-wait':true,'sec-done':true};
+  var prog={},raf={};
+  var pendingFocus=null,pendingImg=null;
+  var $app=document.getElementById('app');
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function pad(n){return String(n).padStart(2,'0')}
+  function barW(n){return 6+Math.min(n,12)*6}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+  function isGone(id){return gone.indexOf(id)>=0}
+  function activeItems(){return ITEMS.filter(function(i){return !(i.id in bought)&&!isGone(i.id)})}
+  function boughtItems(){return ITEMS.filter(function(i){return (i.id in bought)&&!isGone(i.id)})}
+  function matches(i){return (ui.place==='all'||i.place===ui.place)&&(ui.type==='all'||i.type===ui.type)}
+  var toastTimer;
+  function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show')},3600)}
+
+  function bandHtml(o){
+    var tag=o.href?'a':(o.button?'button':'div');
+    var attrs=' class="band c-'+o.color+'"';
+    if(o.href)attrs+=' href="'+o.href+'"';
+    if(o.button)attrs+=' type="button"';
+    if(o.fold){attrs=attrs.replace('class="band','class="band fold-band')+' data-fold="'+o.fold+'" aria-expanded="'+(!!isOpen[o.fold])+'"'}
+    if(o.attrs)attrs+=' '+o.attrs;
+    return '<'+tag+attrs+'><span class="num">'+pad(o.n)+'</span><span class="txt"><h2>'+o.title+'</h2><p>'+o.desc+'</p></span><i class="bar" style="width:'+barW(o.n)+'px"></i></'+tag+'>';
+  }
+  function back(href,label){return '<a class="back" href="'+href+'">‹ '+label+'</a>'}
+
+  /* ---------- sound (synthesised, no files) ---------- */
+  var sfxOn=load('sfx-v1',true)!==false,AC=null,master=null,nbuf=null;
+  function ac(){
+    if(AC===false)return null;
+    if(!AC){try{var C=window.AudioContext||window.webkitAudioContext;AC=new C();master=AC.createGain();master.gain.value=.18;master.connect(AC.destination)}catch(e){AC=false;return null}}
+    if(AC.state==='suspended'){try{AC.resume()}catch(e){}}
+    return AC;
+  }
+  function tone(f,t0,dur,type,vol,f2){
+    var a=sfxOn&&ac(); if(!a)return;
+    var o=a.createOscillator(),g=a.createGain(),t=a.currentTime+(t0||0);
+    o.type=type||'sine'; o.frequency.setValueAtTime(f,t);
+    if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+    var atk=Math.min(.18,Math.max(.05,dur*.3));
+    g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol||.15,t+atk); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+.05);
+  }
+  function noise(t0,dur,f1,f2,vol,q){
+    var a=sfxOn&&ac(); if(!a)return;
+    if(!nbuf){nbuf=a.createBuffer(1,a.sampleRate,a.sampleRate);var d=nbuf.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+    var s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(t0||0);
+    s.buffer=nbuf; s.loop=true; f.type='lowpass'; f.Q.value=q||.7;
+    f.frequency.setValueAtTime(Math.min(f1,700),t); f.frequency.exponentialRampToValueAtTime(Math.max(120,Math.min(f2,700)),t+dur);
+    var atk=Math.min(.12,Math.max(.04,dur*.3));
+    g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(Math.min(vol,.08),t+atk); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+dur+.05);
+  }
+  var SFX={
+    pop:function(){tone(440,0,.7,'sine',.16,520)},
+    done:function(){tone(523,0,.7,'sine',.14);tone(784,.12,.9,'sine',.12)},
+    undo:function(){tone(440,0,.6,'sine',.12,330)},
+    tick:function(){tone(880,0,.3,'sine',.06)},
+    nav:function(){tone(440,0,.5,'sine',.1,520)},
+    paper:function(){noise(0,.08,600,400,.05,.7)},
+    del:function(){tone(300,0,.5,'sine',.12,200)},
+    buy:function(){tone(523,0,.7,'sine',.12);tone(659,.12,.8,'sine',.12);tone(784,.24,.9,'sine',.11)},
+    restore:function(){tone(659,0,.6,'sine',.12);tone(523,.1,.8,'sine',.11)},
+    clear:function(){tone(360,0,.9,'sine',.1,240)},
+    shutter:function(){tone(620,0,.35,'sine',.1)},
+    unfold:function(d){tone(380,0,d,'sine',.09,560)},
+    fold:function(d){tone(560,0,d,'sine',.09,380)}
+  };
+  function sfx(n,a){if(sfxOn&&SFX[n])SFX[n](a)}
+  document.addEventListener('pointerdown',function(){if(sfxOn)ac()},{passive:true});
+  var sfxBtn=document.getElementById('sfxBtn');
+  function paintSfx(){
+    sfxBtn.setAttribute('aria-pressed',sfxOn?'true':'false');
+    sfxBtn.setAttribute('aria-label',sfxOn?'音效：开':'音效：关');
+    sfxBtn.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>'+(sfxOn?'<path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>':'<path d="M16 9.5l5 5M21 9.5l-5 5"/>')+'</svg>';
+  }
+  sfxBtn.addEventListener('click',function(){sfxOn=!sfxOn;save('sfx-v1',sfxOn);paintSfx();if(sfxOn)sfx('pop')});
+  paintSfx();
+
+  /* ---------- views ---------- */
+  function viewHome(){
+    var d=new Date(),wk='日一二三四五六'.charAt(d.getDay());
+    var todoN=todos.filter(function(t){return !t.done}).length;
+    var shopN=activeItems().length;
+    return '<header class="hero hero-sand"><div class="stamp"><small>'+(d.getMonth()+1)+' 月 · 周'+wk+'</small><b>'+pad(d.getDate())+'</b></div>'+
+      '<h1>我的代办事项</h1>'+
+      '<p>两件事放在一起：代办事项是今天要做的事和全部待办；购物清单是想买还没下单的东西。点下面的模块进去。</p></header>'+
+      '<main class="home-bands">'+
+      bandHtml({href:'#todo',color:'gold',n:todoN,title:'代办事项',desc:'今天要做的事，和全部待办'})+
+      bandHtml({href:'#shop',color:'clay',n:shopN,title:'购物清单',desc:'想买，还没下单的东西'})+
+      '</main>';
+  }
+
+  function viewTodo(){
+    return '<header class="hero hero-gold">'+back('#home','首页')+'<h1>代办事项</h1>'+
+      '<p>下面写一条要做的事，点「今天」就进今天代办。做完了打勾，今天代办里就不再显示；不要了点 × 删掉。</p></header>'+
+      '<form class="add" id="addForm" autocomplete="off"><label class="sr" for="newTodo">新的待办</label>'+
+      '<input id="newTodo" type="text" placeholder="写一条要做的事…" maxlength="200"><button type="submit">＋ 添加</button></form>'+
+      '<div id="todoLists"></div>';
+  }
+
+  function rowHtml(t,i){
+    return '<li class="fold fold-row'+(t.done?' done':'')+'" style="--i:'+i+'" data-id="'+esc(t.id)+'">'+
+      '<button type="button" class="check" data-act="toggle" aria-pressed="'+(t.done?'true':'false')+'" aria-label="'+(t.done?'取消完成：':'标记完成：')+esc(t.text)+'"><i>✓</i></button>'+
+      '<span class="t">'+esc(t.text)+'</span>'+
+      '<button type="button" class="today-btn'+(t.today?' on':'')+'" data-act="today" aria-pressed="'+(t.today?'true':'false')+'">今天</button>'+
+      '<button type="button" class="del" data-act="del" aria-label="删除：'+esc(t.text)+'">×</button></li>';
+  }
+
+  function updateTodo(){
+    var host=document.getElementById('todoLists'); if(!host)return;
+    var undone=todos.filter(function(t){return !t.done});
+    var todayList=todos.filter(function(t){return t.today&&!t.done});
+    var allList=undone.concat(todos.filter(function(t){return t.done}));
+    function panel(key,list){
+      if(!todos.length){
+        return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><strong>还没有待办事项</strong><span>在上面写一条，点「添加」就记下来了。</span></div></div>';
+      }
+      if(!list.length){
+        return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><span>今天代办里还没有事。在代办清单里点某一条的「今天」，就会放进来。</span></div></div>';
+      }
+      return '<ul class="panel" data-panel="'+key+'" style="list-style:none;margin:0;padding:0">'+list.map(rowHtml).join('')+'</ul>';
+    }
+    host.innerHTML=
+      bandHtml({button:true,color:'gold',n:todayList.length,title:'今天代办',desc:'今天要做的事',fold:'today'})+panel('today',todayList)+
+      bandHtml({button:true,color:'clay',n:undone.length,title:'代办清单',desc:'全部待办事项',fold:'all'})+panel('all',allList);
+    applyFolds();
+  }
+
+  /* ---------- fold engine: panels unfold row by row like creased paper ---------- */
+  function measure(panel){
+    var items=Array.prototype.slice.call(panel.children);
+    var prev=panel.style.display; panel.style.display='block';
+    items.forEach(function(el){el.style.transform='';el.style.marginBottom='';el.style.filter=''});
+    items.forEach(function(el){el._h=el.offsetHeight});
+    panel.style.display=prev;
+    return items;
+  }
+  function setFold(panel,p){
+    var items=panel.children,n=items.length;
+    if(p<=0.001||!n){panel.style.display='none';return}
+    panel.style.display='block';
+    for(var i=0;i<n;i++){
+      var el=items[i],h=el._h||0;
+      if(p>=0.999){el.style.transform='';el.style.marginBottom='';el.style.filter='';continue}
+      var q=Math.max(0,Math.min(1,p*(n+1)-i));
+      var a=(1-q)*88,cos=Math.cos(a*Math.PI/180);
+      el.style.transform='perspective(700px) rotateX('+(-a)+'deg)';
+      el.style.marginBottom=(-h*(1-cos))+'px';
+      el.style.filter=q>=1?'':'brightness('+(1-.16*(1-q))+')';
+    }
+  }
+  function panelEl(key){return document.querySelector('[data-panel="'+key+'"]')}
+  function syncBand(key){var b=document.querySelector('[data-fold="'+key+'"]');if(b)b.setAttribute('aria-expanded',isOpen[key]?'true':'false')}
+  function applyFolds(){
+    var list=document.querySelectorAll('[data-panel]');
+    for(var i=0;i<list.length;i++){
+      var key=list[i].getAttribute('data-panel');
+      if(!(key in prog))prog[key]=isOpen[key]?1:0;
+      measure(list[i]); setFold(list[i],prog[key]);
+    }
+  }
+  function animateTo(key,target,dur){
+    cancelAnimationFrame(raf[key]);
+    var panel=panelEl(key); if(!panel)return;
+    measure(panel);
+    var from=prog[key]||0;
+    isOpen[key]=target>0.5; syncBand(key);
+    var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce||from===target){prog[key]=target;setFold(panel,target);return}
+    if(Math.abs(target-from)>.05)sfx(target>from?'unfold':'fold',Math.max(.22,Math.abs(target-from)*.56));
+    var d=dur||Math.max(220,Math.abs(target-from)*560),t0=null;
+    function step(now){
+      if(t0===null)t0=now;
+      var k=Math.min(1,(now-t0)/d),e=1-Math.pow(1-k,3);
+      prog[key]=from+(target-from)*e;
+      var pn=panelEl(key); if(!pn)return;
+      setFold(pn,prog[key]);
+      if(k<1)raf[key]=requestAnimationFrame(step);
+    }
+    raf[key]=requestAnimationFrame(step);
+  }
+  var drag=null;
+  $app.addEventListener('pointerdown',function(e){
+    var band=e.target.closest('.fold-band'); if(!band)return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    var key=band.getAttribute('data-fold'),panel=panelEl(key); if(!panel)return;
+    cancelAnimationFrame(raf[key]);
+    var items=measure(panel),H=0;
+    items.forEach(function(el){H+=el._h||0});
+    var now=performance.now();
+    drag={key:key,y0:e.clientY,p0:prog[key]||0,D:Math.max(140,Math.min(H,320)),moved:false,last:e.clientY,lastT:now,v:0,id:e.pointerId};
+    setFold(panel,prog[key]||0);
+    try{band.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  $app.addEventListener('pointermove',function(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    var dy=e.clientY-drag.y0;
+    if(!drag.moved&&Math.abs(dy)<6)return;
+    drag.moved=true;
+    var p=Math.max(0,Math.min(1,drag.p0+dy/drag.D));
+    prog[drag.key]=p;
+    var pn=panelEl(drag.key); if(pn){setFold(pn,p);var kk=Math.floor(p*(pn.children.length+1));if(kk!==drag.k){drag.k=kk;sfx('paper')}}
+    var now=performance.now(),dt=now-drag.lastT;
+    if(dt>0){drag.v=(e.clientY-drag.last)/dt;drag.last=e.clientY;drag.lastT=now}
+  });
+  function endDrag(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    var d=drag; drag=null;
+    var target;
+    if(!d.moved)target=d.p0>0.5?0:1;
+    else if(Math.abs(d.v)>0.35)target=d.v>0?1:0;
+    else target=(prog[d.key]||0)>0.5?1:0;
+    animateTo(d.key,target);
+  }
+  $app.addEventListener('pointerup',endDrag);
+  $app.addEventListener('pointercancel',endDrag);
+
+  function viewShop(){
+    var a=activeItems();
+    var buyN=a.filter(function(i){return i.cat==='buy'}).length;
+    var waitN=a.filter(function(i){return i.cat==='wait'}).length;
+    var doneN=boughtItems().length;
+    return '<header class="hero hero-sand">'+back('#home','首页')+'<h1>想买，还没下单的</h1>'+
+      '<p>这张清单收着所有计划代购、还没买的东西，分成两类：待购买的近期就要买；等折扣的不急，盯着价格，降了再出手。点下面的板块进去，看每一类都有些什么。买好了的点「已购买」，会进「已购清单」，7 天内还能恢复。</p></header>'+
+      '<div class="stats"><div><b>'+pad(a.length)+'</b><span>清单总数</span></div><div><b>'+pad(buyN)+'</b><span>待购买</span></div><div><b>'+pad(waitN)+'</b><span>等折扣</span></div></div>'+
+      '<main>'+
+      bandHtml({href:'#shop-list',color:'clay',n:buyN,title:'待购买',desc:'近期就要买，别拖',attrs:'data-focus="buy"'})+
+      bandHtml({href:'#shop-list',color:'gold',n:waitN,title:'等折扣',desc:'先观望，等降价或有活动再买',attrs:'data-focus="wait"'})+
+      bandHtml({href:'#shop-list',color:'sand',n:doneN,title:'已购清单',desc:'买好了的都在这里，7 天内可恢复',attrs:'data-focus="done"'})+
+      '</main>'+howto();
+  }
+  function howto(){return '<footer class="howto"><h4>怎么往里加</h4><p>'+esc(HOWTO)+'</p></footer>'}
+
+  function chipsHtml(group,all,list,cur){
+    var h='<button type="button" class="chip" data-act="chip" data-group="'+group+'" data-val="all" aria-pressed="'+(cur==='all')+'">'+all+'</button>';
+    list.forEach(function(v){h+='<button type="button" class="chip" data-act="chip" data-group="'+group+'" data-val="'+v+'" aria-pressed="'+(cur===v)+'">'+v+'</button>'});
+    return h;
+  }
+
+  function viewShopList(){
+    return '<header class="hero hero-sand">'+back('#shop','购物清单')+'<h1>想买，还没下单的</h1></header>'+
+      '<div class="filters"><div class="fl"><span class="lab">购买地点</span><div class="chips" role="group" aria-label="按购买地点筛选">'+chipsHtml('place','全部',PLACES,ui.place)+'</div></div>'+
+      '<div class="fl"><span class="lab">物品类型</span><div class="chips" role="group" aria-label="按物品类型筛选">'+chipsHtml('type','全部类型',TYPES,ui.type)+'</div></div></div>'+
+      '<main id="shopLists"></main>'+howto();
+  }
+
+  function cardHtml(i,ts){
+    var img=imgs[i.id]||i.img;
+    var pic=img?'<img src="'+img+'" alt="'+esc(i.name)+'">':
+      '<span class="ph"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg><b>待添加</b></span>';
+    var tags='';
+    if(i.place)tags+='<span class="tag place">'+i.place+'</span>';
+    if(i.type)tags+='<span class="tag">'+i.type+'</span>';
+    if(i.status)tags+='<span class="tag status">'+i.status+'</span>';
+    var meta='';
+    if(i.place)meta+='<div><dt>购买地点</dt><dd>'+i.place+'</dd></div>';
+    if(i.when)meta+='<div><dt>购买时间</dt><dd>'+esc(i.when)+'</dd></div>';
+    if(i.status)meta+='<div><dt>状态</dt><dd>'+i.status+'</dd></div>';
+    if(i.next)meta+='<div><dt>下次检查</dt><dd>'+i.next+'</dd></div>';
+    var acts;
+    if(ts){
+      var left=Math.max(0,Math.ceil((ts+7*DAY-Date.now())/DAY));
+      meta+='<div><dt>已购买</dt><dd>还剩 '+left+' 天可恢复</dd></div>';
+      acts='<button type="button" class="act" data-act="restore">恢复</button>';
+    }else{
+      acts='<button type="button" class="act" data-act="buy">✓ 已购买</button>';
+    }
+    return '<article class="card fold" data-id="'+i.id+'">'+
+      '<button type="button" class="pic" data-act="pic" aria-label="'+(img?'更换':'添加')+'图片：'+esc(i.name)+'">'+pic+'</button>'+
+      '<div class="info"><h3>'+esc(i.name)+'</h3><div class="tags">'+tags+'</div>'+
+      '<p class="price">'+i.price+'</p><p class="note">'+esc(i.note)+'</p>'+
+      (meta?'<dl class="meta">'+meta+'</dl>':'')+
+      (i.link?'<a class="link" href="'+i.link+'" target="_blank" rel="noopener">去淘宝看看 ›</a><br>':'')+
+      '<div class="acts">'+acts+'</div></div></article>';
+  }
+
+  function renderShopLists(){
+    var host=document.getElementById('shopLists'); if(!host)return;
+    expire();
+    var act=activeItems().filter(matches);
+    var buy=act.filter(function(i){return i.cat==='buy'});
+    var wait=act.filter(function(i){return i.cat==='wait'});
+    var allBought=boughtItems();
+    var done=allBought.filter(matches).sort(function(a,b){return bought[b.id]-bought[a.id]});
+    var nomatch='<div class="nomatch fold">这一栏没有符合当前筛选的商品。</div>';
+    function sec(key,color,title,desc,list,inner){
+      return '<section class="sec" id="sec-'+key+'">'+bandHtml({button:true,fold:'sec-'+key,color:color,n:list.length,title:title,desc:desc})+'<div class="panel" data-panel="sec-'+key+'">'+inner+'</div></section>';
+    }
+    var doneInner;
+    if(!allBought.length){
+      doneInner='<div class="empty fold"><strong>已购清单还是空的</strong><span>买好了的东西点「已购买」，就会出现在这里。</span></div>';
+    }else{
+      doneInner='<div class="clearbar fold"><span>已购清单共 '+allBought.length+' 件</span><button type="button" class="act ghost" data-act="clear">清空已购清单</button></div>'+
+        (done.length?done.map(function(i){return cardHtml(i,bought[i.id])}).join(''):nomatch);
+    }
+    host.innerHTML=
+      sec('buy','clay','待购买','近期就要买，别拖',buy,buy.length?buy.map(function(i){return cardHtml(i)}).join(''):nomatch)+
+      sec('wait','gold','等折扣','先观望，等降价或有活动再买',wait,wait.length?wait.map(function(i){return cardHtml(i)}).join(''):nomatch)+
+      sec('done','sand','已购清单','7 天内可恢复，过期自动删除',done,doneInner);
+    applyFolds();
+  }
+
+  /* ---------- router ---------- */
+  function route(){
+    var r=(location.hash||'#home').slice(1);
+    var name=['home','todo','shop','shop-list'].indexOf(r)>=0?r:'home';
+    expire();
+    var html=name==='home'?viewHome():name==='todo'?viewTodo():name==='shop'?viewShop():viewShopList();
+    var tn=0;
+    prog={};
+    if(name==='todo'){
+      tn=todos.filter(function(t){return t.today&&!t.done}).length;
+      isOpen.today=tn>0; isOpen.all=tn===0;
+    }
+    if(name==='shop-list'){isOpen['sec-buy']=isOpen['sec-wait']=isOpen['sec-done']=true}
+    $app.className='app enter';
+    $app.innerHTML=html;
+    if(name==='todo'){
+      var first=isOpen.today?'today':'all';
+      prog.today=0;prog.all=0;
+      updateTodo();
+      setTimeout(function(){animateTo(first,1,600)},120);
+    }
+    if(name==='shop-list')renderShopLists();
+    window.scrollTo(0,0);
+    if(name==='shop-list'&&pendingFocus){
+      var el=document.getElementById('sec-'+pendingFocus);
+      if(el)el.scrollIntoView({block:'start'});
+    }
+    pendingFocus=null;
+  }
+  window.addEventListener('hashchange',route);
+
+  /* ---------- events ---------- */
+  $app.addEventListener('click',function(e){
+    var f=e.target.closest('a[data-focus]');
+    if(f){pendingFocus=f.getAttribute('data-focus');sfx('nav');return}
+    if(e.target.closest('a.back')){sfx('nav');return}
+    var fb=e.target.closest('.fold-band');
+    if(fb){
+      if(e.detail===0){var fk=fb.getAttribute('data-fold');animateTo(fk,isOpen[fk]?0:1)}
+      return;
+    }
+    var el=e.target.closest('[data-act]'); if(!el)return;
+    var act=el.getAttribute('data-act');
+    var row=el.closest('[data-id]');
+    var id=row?row.getAttribute('data-id'):null;
+    var t;
+    if(act==='toggle'){
+      t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
+      t.done=!t.done; sfx(t.done?'done':'undo'); save(K.todo,todos); updateTodo();
+    }else if(act==='today'){
+      t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
+      t.today=!t.today; sfx('tick'); save(K.todo,todos); updateTodo();
+    }else if(act==='del'){
+      sfx('del'); todos=todos.filter(function(x){return x.id!==id}); save(K.todo,todos); updateTodo();
+    }else if(act==='chip'){
+      sfx('tick'); ui[el.getAttribute('data-group')]=el.getAttribute('data-val');
+      var sibs=el.parentNode.querySelectorAll('.chip');
+      for(var k=0;k<sibs.length;k++)sibs[k].setAttribute('aria-pressed',sibs[k]===el?'true':'false');
+      renderShopLists();
+    }else if(act==='buy'){
+      sfx('buy'); bought[id]=Date.now(); save(K.bought,bought); renderShopLists();
+    }else if(act==='restore'){
+      sfx('restore'); delete bought[id]; save(K.bought,bought); renderShopLists();
+    }else if(act==='clear'){
+      sfx('clear'); Object.keys(bought).forEach(function(b){if(gone.indexOf(b)<0)gone.push(b)});
+      bought={}; save(K.bought,bought); save(K.gone,gone); renderShopLists();
+    }else if(act==='pic'){
+      pendingImg=id; document.getElementById('imgInput').click();
+    }
+  });
+
+  $app.addEventListener('submit',function(e){
+    if(e.target.id!=='addForm')return;
+    e.preventDefault();
+    var inp=document.getElementById('newTodo');
+    var text=inp.value.trim(); if(!text)return;
+    sfx('pop'); todos.unshift({id:uid(),text:text,done:false,today:false});
+    save(K.todo,todos);
+    inp.value='';
+    updateTodo();
+    if(!isOpen.all)animateTo('all',1);
+  });
+
+  document.getElementById('imgInput').addEventListener('change',function(e){
+    var file=e.target.files&&e.target.files[0]; var id=pendingImg; e.target.value='';
+    if(!file||!id)return;
+    var url=URL.createObjectURL(file),im=new Image();
+    im.onload=function(){
+      var s=Math.min(1,600/Math.max(im.width,im.height));
+      var c=document.createElement('canvas'); c.width=Math.round(im.width*s); c.height=Math.round(im.height*s);
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      imgs[id]=c.toDataURL('image/jpeg',.82);
+      sfx('shutter');
+      if(!save(K.img,imgs))toast('图片换上了，但这台设备存不下，刷新后会消失。');
+      renderShopLists();
+    };
+    im.onerror=function(){URL.revokeObjectURL(url);toast('这张图读不出来，换一张试试。')};
+    im.src=url;
+  });
+
+  route();
+})();
+</script>
+</body>
+</html>
