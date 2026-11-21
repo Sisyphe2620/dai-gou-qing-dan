@@ -531,22 +531,158 @@
       /* 设计字体：标题、卡片名、大数字换青棵黄油体 */
       .intro h1, .gc-title, .stat .num, .sec-head h2 { font-family: "ZCOOL QingKe HuangYou", "Noto Serif SC", "Noto Sans SC", serif; }
     </style>
+    <style>
+      /* ===== 第四轮：mombo / florest 植物风重设计（2026-11-21） ===== */
+      /* 参考图语言：鼠尾草绿大圆角 hero（底部弧形收边）、奶油底、编号分区、有机圆角卡片。
+         功能、结构、localStorage 键名全部不动，只改造型和布局。 */
+      :root {
+        --sage: #5E7A55;          /* 鼠尾草绿：Earth 苔藓绿按参考图加深调和 */
+        --forest: #42563D;        /* 森林绿：深色对比 */
+        --ruby: #A85A2B;          /* 古铜加深一档：配纯白字约 5.1:1 */
+        --moss: #6B7040;          /* 苔藓加深一档：配纯白字约 5.2:1 */
+        --paper: #FBF7EC;         /* 奶油卡面，比底色略亮 */
+        --shadow-soft: 0 2px 4px rgba(80,59,39,.06), 0 18px 36px -18px rgba(80,59,39,.28);
+      }
+
+      /* ---------- Hero：绿底大圆角 + 弧形收边 + 植物圆片 ---------- */
+      .intro {
+        position: relative;
+        overflow: hidden;
+        background: var(--sage);
+        border-radius: 32px 32px 104px 32px / 32px 32px 72px 32px;
+        padding: 30px 28px 44px;
+        min-height: 218px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        margin-bottom: 26px;
+        box-shadow: var(--shadow-soft);
+      }
+      #todoView .intro {
+        background: var(--sage);
+        border-radius: 32px 32px 32px 104px / 32px 32px 32px 72px;
+      }
+      #shopView .intro { background: var(--sage); }
+      .intro h1 {
+        color: #fff;
+        font-size: clamp(34px, 7vw, 48px);
+        line-height: 1.15;
+        margin: 0 0 10px;
+      }
+      .intro p { color: rgba(255,255,255,.93); max-width: 25em; }
+      .intro p b { color: #fff; }
+      .hero-plant {
+        position: absolute;
+        top: 20px;
+        right: 22px;
+        width: 148px;
+        height: 148px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 5px solid rgba(255,255,255,.9);
+        box-shadow: 0 10px 24px -8px rgba(30,45,25,.45);
+        pointer-events: none;
+      }
+      .hero-plant img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+
+      /* ---------- 编号：卡片 01/02/03 + 分区标题 01/02/03 ---------- */
+      .gc-num {
+        display: block;
+        font-family: "ZCOOL QingKe HuangYou", "Noto Serif SC", "Noto Sans SC", serif;
+        font-size: 42px;
+        line-height: 1;
+        color: rgba(255,255,255,.92);
+        margin-bottom: 8px;
+        letter-spacing: .02em;
+      }
+      .group-card[data-todo-view="today"] .gc-num { color: rgba(80,59,39,.85); }
+      .sec-num {
+        font-family: "ZCOOL QingKe HuangYou", "Noto Serif SC", "Noto Sans SC", serif;
+        font-size: 30px;
+        line-height: 1;
+        flex: none;
+      }
+      section.urgent-sec .sec-num { color: var(--ruby); }
+      section.watch-sec .sec-num { color: var(--moss); }
+      section[data-group="purchased"] .sec-num { color: var(--indigo); }
+
+      /* ---------- 模块卡 / 分组卡：有机圆角 + 纯白字（修对比度） ---------- */
+      .group-cards { gap: 14px; }
+      .group-card {
+        border-radius: 26px;
+        padding: 26px 24px 22px;
+        min-height: 172px;
+        box-shadow: 6px 6px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow-soft);
+      }
+      .group-card:active { box-shadow: 3px 3px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow-soft); }
+      .group-card.active { box-shadow: 6px 6px 0 var(--layer, rgba(80,59,39,.28)), var(--shadow-soft); }
+      .gc-title { font-size: 30px; }
+      .group-card[data-module] .gc-title, .group-card[data-group] .gc-title, .group-card[data-todo-view] .gc-title { color: #fff; }
+      .group-card[data-module] .gc-desc, .group-card[data-group] .gc-desc, .group-card[data-todo-view] .gc-desc { color: rgba(255,255,255,.93); }
+      .group-card[data-module] .gc-count, .group-card[data-group] .gc-count, .group-card[data-todo-view] .gc-count,
+      .group-card[data-module] .gc-arrow, .group-card[data-group] .gc-arrow, .group-card[data-todo-view] .gc-arrow { color: rgba(255,255,255,.95); }
+      /* 今天代办是浅驼卡，仍配深胡桃字 */
+      .group-card[data-todo-view="today"] .gc-title { color: #503B27; }
+      .group-card[data-todo-view="today"] .gc-desc { color: rgba(80,59,39,.8); }
+      .group-card[data-todo-view="today"] .gc-count, .group-card[data-todo-view="today"] .gc-arrow { color: rgba(80,59,39,.9); }
+
+      /* ---------- 概览统计：更圆、纯白字 ---------- */
+      .summary { gap: 12px; }
+      .stat { border-radius: 22px; padding: 18px 18px 16px; box-shadow: var(--shadow-soft); }
+      .stat .num, .stat.urgent .num, .stat.watch .num { color: #fff; }
+      .stat .lbl { color: rgba(255,255,255,.92); }
+
+      /* ---------- 分区标题：细线 + 大数字 ---------- */
+      .sec-head { border-bottom: 1.5px solid var(--line); padding-bottom: 12px; }
+      .sec-head h2 { font-size: 24px; }
+
+      /* ---------- 商品卡 / 待办行 / 其他：更圆润 ---------- */
+      .item { border-radius: 22px; box-shadow: var(--shadow-soft); }
+      .item .pic-add { border-radius: 14px; }
+      .todo-item { border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow-soft); }
+      .todo-add input { border-radius: 14px; }
+      .todo-add-btn { border-radius: 14px; color: #fff; }
+      .cat-panel { border-radius: 16px; }
+      .empty { border-radius: 18px; }
+      .howto {
+        background: #EDF0E2;
+        border: 1px solid #DCE1CB;
+        border-radius: 20px;
+        box-shadow: var(--shadow-soft);
+      }
+      .howto svg { color: var(--sage); }
+
+      @media (max-width: 520px) {
+        .intro { min-height: 204px; padding: 24px 20px 36px; border-radius: 28px 28px 84px 28px / 28px 28px 60px 28px; }
+        #todoView .intro { border-radius: 28px 28px 28px 84px / 28px 28px 28px 60px; }
+        .intro h1 { font-size: clamp(30px, 8vw, 38px); }
+        .intro p { max-width: calc(100% - 84px); font-size: 14px; }
+        .hero-plant { width: 76px; height: 76px; top: 14px; right: 14px; border-width: 3px; }
+        .group-card { min-height: 0; padding: 22px 20px 18px; }
+        .gc-num { font-size: 34px; }
+        .gc-title { font-size: 26px; }
+        .sec-num { font-size: 26px; }
+      }
+    </style>
   </head>
   <body>
     <main class="wrap">
       <div id="homeView">
       <div class="intro">
         <h1>我的代办事项</h1>
+        <span class="hero-plant" aria-hidden="true"><img src="assets/hero-plant.jpg" alt=""></span>
         <p>两件事放在一起：<b>代办事项</b>是今天要做的事和全部待办；<b>购物清单</b>是想买还没下单的东西。点下面的模块进去。</p>
       </div>
 
       <div class="group-cards module-cards">
         <button type="button" class="group-card" data-module="todo">
+          <span class="gc-num" aria-hidden="true">01</span>
           <span class="gc-title">代办事项</span>
           <span class="gc-desc">今天要做的事，和全部待办</span>
           <span class="gc-foot"><span class="gc-count" id="todoCardCount">0 件待办</span><span class="gc-arrow" aria-hidden="true">›</span></span>
         </button>
         <button type="button" class="group-card" data-module="shop">
+          <span class="gc-num" aria-hidden="true">02</span>
           <span class="gc-title">购物清单</span>
           <span class="gc-desc">想买，还没下单的东西</span>
           <span class="gc-foot"><span class="gc-count" id="shopCardCount">7 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
@@ -560,16 +696,19 @@
       </div>
       <div class="intro">
         <h1>代办事项</h1>
+        <span class="hero-plant" aria-hidden="true"><img src="assets/hero-plant.jpg" alt=""></span>
         <p>下面写一条要做的事，点「今天」就进<b>今天代办</b>。做完了打勾，今天代办里就不再显示；不要了点 × 删掉。</p>
       </div>
 
       <div class="group-cards module-cards">
         <button type="button" class="group-card" data-todo-view="today">
+          <span class="gc-num" aria-hidden="true">01</span>
           <span class="gc-title">今天代办</span>
           <span class="gc-desc">今天要做的事</span>
           <span class="gc-foot"><span class="gc-count" id="todoTodayCount">0 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
         </button>
         <button type="button" class="group-card" data-todo-view="all">
+          <span class="gc-num" aria-hidden="true">02</span>
           <span class="gc-title">代办清单</span>
           <span class="gc-desc">全部待办事项</span>
           <span class="gc-foot"><span class="gc-count" id="todoAllCount">0 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
@@ -593,6 +732,7 @@
       </div>
       <div class="intro">
         <h1>想买，还没下单的</h1>
+        <span class="hero-plant" aria-hidden="true"><img src="assets/hero-plant.jpg" alt=""></span>
         <p>这张清单收着所有<b>计划代购、还没买</b>的东西，分成两类：<b>待购买</b>的近期就要买；<b>等折扣</b>的不急，盯着价格，降了再出手。点下面的板块进去，看每一类都有些什么。买好了的点「已购买」，会进「已购清单」，7 天内还能恢复。</p>
       </div>
 
@@ -613,16 +753,19 @@
 
       <div class="group-cards">
         <button type="button" class="group-card urgent-card" data-group="urgent">
+          <span class="gc-num" aria-hidden="true">01</span>
           <span class="gc-title">待购买</span>
           <span class="gc-desc">近期就要买，别拖</span>
           <span class="gc-foot"><span class="gc-count">4 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
         </button>
         <button type="button" class="group-card watch-card" data-group="watch">
+          <span class="gc-num" aria-hidden="true">02</span>
           <span class="gc-title">等折扣</span>
           <span class="gc-desc">先观望，等降价或有活动再买</span>
           <span class="gc-foot"><span class="gc-count">2 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
         </button>
         <button type="button" class="group-card" data-group="purchased">
+          <span class="gc-num" aria-hidden="true">03</span>
           <span class="gc-title">已购清单</span>
           <span class="gc-desc">买好了的都在这里，7 天内可恢复</span>
           <span class="gc-foot"><span class="gc-count">0 件</span><span class="gc-arrow" aria-hidden="true">›</span></span>
@@ -658,6 +801,7 @@
 
       <section class="urgent-sec" data-group="urgent" aria-labelledby="urgent-title">
         <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">01</span>
           <h2 id="urgent-title">待购买</h2>
           <span class="desc">近期就要买，别拖</span>
           <span class="count">5 件</span>
@@ -731,6 +875,7 @@
 
       <section class="watch-sec" data-group="watch" aria-labelledby="watch-title">
         <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">02</span>
           <h2 id="watch-title">等折扣</h2>
           <span class="desc">先观望，等降价或有活动再买</span>
           <span class="count">2 件</span>
@@ -768,6 +913,7 @@
 
       <section data-group="purchased" aria-labelledby="purchased-title">
         <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">03</span>
           <h2 id="purchased-title">已购清单</h2>
           <span class="desc">7 天内可恢复，过期自动删除</span>
           <span class="count">0 件</span>
