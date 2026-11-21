@@ -214,7 +214,7 @@ button{font-family:inherit}
   var sfxOn=load('sfx-v1',true)!==false,AC=null,master=null,nbuf=null;
   function ac(){
     if(AC===false)return null;
-    if(!AC){try{var C=window.AudioContext||window.webkitAudioContext;AC=new C();master=AC.createGain();master.gain.value=.18;master.connect(AC.destination)}catch(e){AC=false;return null}}
+    if(!AC){try{var C=window.AudioContext||window.webkitAudioContext;AC=new C();master=AC.createGain();master.gain.value=.25;master.connect(AC.destination)}catch(e){AC=false;return null}}
     if(AC.state==='suspended'){try{AC.resume()}catch(e){}}
     return AC;
   }
@@ -223,7 +223,7 @@ button{font-family:inherit}
     var o=a.createOscillator(),g=a.createGain(),t=a.currentTime+(t0||0);
     o.type=type||'sine'; o.frequency.setValueAtTime(f,t);
     if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
-    var atk=Math.min(.18,Math.max(.05,dur*.3));
+    var atk=Math.min(.008,Math.max(.002,dur*.2));
     g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol||.15,t+atk); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+.05);
   }
@@ -231,26 +231,26 @@ button{font-family:inherit}
     var a=sfxOn&&ac(); if(!a)return;
     if(!nbuf){nbuf=a.createBuffer(1,a.sampleRate,a.sampleRate);var d=nbuf.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1}
     var s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime+(t0||0);
-    s.buffer=nbuf; s.loop=true; f.type='lowpass'; f.Q.value=q||.7;
-    f.frequency.setValueAtTime(Math.min(f1,700),t); f.frequency.exponentialRampToValueAtTime(Math.max(120,Math.min(f2,700)),t+dur);
-    var atk=Math.min(.12,Math.max(.04,dur*.3));
+    s.buffer=nbuf; s.loop=true; f.type='bandpass'; f.Q.value=q||1.2;
+    f.frequency.setValueAtTime(f1,t); f.frequency.exponentialRampToValueAtTime(f2,t+dur);
+    var atk=Math.min(.004,Math.max(.001,dur*.25));
     g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(Math.min(vol,.08),t+atk); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+dur+.05);
   }
   var SFX={
-    pop:function(){tone(440,0,.7,'sine',.16,520)},
-    done:function(){tone(523,0,.7,'sine',.14);tone(784,.12,.9,'sine',.12)},
-    undo:function(){tone(440,0,.6,'sine',.12,330)},
-    tick:function(){tone(880,0,.3,'sine',.06)},
-    nav:function(){tone(440,0,.5,'sine',.1,520)},
-    paper:function(){noise(0,.08,600,400,.05,.7)},
-    del:function(){tone(300,0,.5,'sine',.12,200)},
-    buy:function(){tone(523,0,.7,'sine',.12);tone(659,.12,.8,'sine',.12);tone(784,.24,.9,'sine',.11)},
-    restore:function(){tone(659,0,.6,'sine',.12);tone(523,.1,.8,'sine',.11)},
-    clear:function(){tone(360,0,.9,'sine',.1,240)},
-    shutter:function(){tone(620,0,.35,'sine',.1)},
-    unfold:function(d){tone(380,0,d,'sine',.09,560)},
-    fold:function(d){tone(560,0,d,'sine',.09,380)}
+    pop:function(){tone(520,0,.09,'sine',.2,660);noise(0,.015,3000,3000,.04,1.5)},
+    done:function(){tone(660,0,.08,'triangle',.18);tone(880,.06,.12,'triangle',.16);noise(0,.012,3200,3200,.04,1.5);noise(.06,.012,3400,3400,.035,1.5)},
+    undo:function(){tone(520,0,.08,'sine',.15,392);noise(0,.012,3000,3000,.035,1.5)},
+    tick:function(){noise(0,.012,3500,2500,.06,2);tone(1200,0,.03,'sine',.05)},
+    nav:function(){tone(440,0,.08,'sine',.12,560);noise(0,.012,3000,3000,.03,1.5)},
+    paper:function(){noise(0,.06,1200,2400,.05,1)},
+    del:function(){tone(220,0,.12,'sine',.18,140);noise(0,.02,400,300,.05,1)},
+    buy:function(){tone(880,0,.09,'sine',.18);tone(1318,.09,.14,'sine',.16);noise(0,.012,3400,3400,.04,1.5);noise(.09,.012,3600,3600,.035,1.5)},
+    restore:function(){tone(784,0,.08,'sine',.15);tone(659,.07,.11,'sine',.14);noise(0,.012,3200,3200,.035,1.5)},
+    clear:function(){tone(420,0,.12,'sine',.14,280);noise(0,.04,900,600,.04,1)},
+    shutter:function(){noise(0,.012,3200,2800,.07,2);noise(.06,.012,3200,2800,.06,2);tone(500,0,.03,'sine',.06)},
+    unfold:function(d){noise(0,d,900,2200,.05,1)},
+    fold:function(d){noise(0,d,2200,900,.05,1)}
   };
   function sfx(n,a){if(sfxOn&&SFX[n])SFX[n](a)}
   document.addEventListener('pointerdown',function(){if(sfxOn)ac()},{passive:true});
