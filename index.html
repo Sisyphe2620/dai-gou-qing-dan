@@ -694,10 +694,15 @@ button{font-family:inherit}
     rec.onend=function(){setListening(false)};
     rec.onerror=function(ev){
       setListening(false);
-      if(ev.error==='not-allowed')toast('麦克风没开权限，点地址栏旁边的锁打开');
-      else if(ev.error==='no-speech')toast('没听到声音，再说一遍');
-      else if(ev.error==='aborted')return;
-      else toast('语音识别出问题了，再试一次');
+      if(ev.error==='aborted')return;
+      var m={
+        'not-allowed':'麦克风没开权限，点地址栏旁边的锁打开',
+        'no-speech':'没听到声音，再说一遍',
+        'audio-capture':'找不到麦克风',
+        'network':'网络连不上语音服务，检查一下网络再试',
+        'service-not-allowed':'这个浏览器里语音服务不可用，换 Safari 或 Chrome 打开试试'
+      }[ev.error];
+      toast(m||('语音识别失败：'+ev.error+'，再试一次'));
     };
     try{rec.start();setListening(true)}catch(_){setListening(false)}
   }
