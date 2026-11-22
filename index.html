@@ -562,6 +562,7 @@ button{font-family:inherit}
     var doneN=boughtItems().length;
     return '<header class="hero hero-sand">'+back('#home','首页')+'<h1>想买，还没下单的</h1>'+
       '<p>这张清单收着所有计划代购、还没买的东西，分成两类：待购买的近期就要买；等折扣的不急，盯着价格，降了再出手。点下面的板块进去，看每一类都有些什么。买好了的点「已购买」，会进「已购清单」，7 天内还能恢复。</p></header>'+
+      shopAddHtml()+
       '<div class="stats"><div><b>'+pad(a.length)+'</b><span>清单总数</span></div><div><b>'+pad(buyN)+'</b><span>待购买</span></div><div><b>'+pad(waitN)+'</b><span>等折扣</span></div></div>'+
       '<main>'+
       bandHtml({href:'#shop-list',color:'clay',n:buyN,title:'待购买',desc:'近期就要买，别拖',attrs:'data-focus="buy"'})+
@@ -575,6 +576,16 @@ button{font-family:inherit}
     var h='<button type="button" class="chip" data-act="chip" data-group="'+group+'" data-val="all" aria-pressed="'+(cur==='all')+'">'+all+'</button>';
     list.forEach(function(v){h+='<button type="button" class="chip" data-act="chip" data-group="'+group+'" data-val="'+v+'" aria-pressed="'+(cur===v)+'">'+v+'</button>'});
     return h;
+  }
+
+  function shopAddHtml(){
+    return '<form class="add" id="shopAddForm" autocomplete="off"><label class="sr" for="newItem">新的商品</label>'+
+      '<input id="newItem" type="text" placeholder="写要买的东西…" maxlength="200">'+
+      '<button type="button" class="mic" data-act="voice" aria-label="语音输入"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></button>'+
+      '<button type="submit">＋ 添加</button></form>'+
+      '<div class="shop-cats"><span>放进：</span>'+
+      '<button type="button" class="chip" data-act="shopcat" data-cat="buy" aria-pressed="'+(shopCat==='buy')+'">待购买</button>'+
+      '<button type="button" class="chip" data-act="shopcat" data-cat="wait" aria-pressed="'+(shopCat==='wait')+'">等折扣</button></div>';
   }
 
   function viewShopList(){
