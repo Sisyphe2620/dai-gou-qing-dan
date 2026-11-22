@@ -201,7 +201,7 @@ button{font-family:inherit}
   /* ---------- helpers ---------- */
   var ui={place:'all',type:'all'};
   var shopCat='buy';
-  var isOpen={today:false,all:true,'sec-buy':true,'sec-wait':true,'sec-done':true};
+  var isOpen={today:false,all:true,done:false,'sec-buy':true,'sec-wait':true,'sec-done':true};
   var prog={},raf={};
   var pendingFocus=null,pendingImg=null;
   var $app=document.getElementById('app');
@@ -359,7 +359,7 @@ button{font-family:inherit}
 
   function viewTodo(){
     return '<header class="hero hero-gold">'+back('#home','首页')+'<h1>代办事项</h1>'+
-      '<p>下面写一条要做的事，点「今天」就进今天代办。做完了打勾，今天代办里就不再显示；不要了点 × 删掉。</p></header>'+
+      '<p>下面写一条要做的事，点「今天」就进今天代办。做完了点 ×，进下面的「已完成」；在「已完成」里再点 × 就是彻底删掉，点垃圾桶一次清空全部已完成。</p></header>'+
       '<form class="add" id="addForm" autocomplete="off"><label class="sr" for="newTodo">新的待办</label>'+
       '<input id="newTodo" type="text" placeholder="写一条要做的事…" maxlength="200">'+
       '<button type="button" id="micBtn" class="mic" data-act="voice" aria-label="语音输入"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></button>'+
@@ -368,31 +368,40 @@ button{font-family:inherit}
   }
 
   function rowHtml(t,i){
+    var xBtn=t.done
+      ?'<button type="button" class="del" data-act="del" aria-label="删除：'+esc(t.text)+'">×</button>'
+      :'<button type="button" class="del" data-act="toggle" aria-pressed="false" aria-label="标记完成：'+esc(t.text)+'">×</button>';
+    var todayBtn=t.done?'':'<button type="button" class="today-btn'+(t.today?' on':'')+'" data-act="today" aria-pressed="'+(t.today?'true':'false')+'">今天</button>';
     return '<li class="fold fold-row'+(t.done?' done':'')+'" style="--i:'+i+'" data-id="'+esc(t.id)+'">'+
       '<span class="num" data-drag>'+pad(i+1)+'</span>'+
       '<span class="t">'+esc(t.text)+'</span>'+
-      '<button type="button" class="today-btn'+(t.today?' on':'')+'" data-act="today" aria-pressed="'+(t.today?'true':'false')+'">今天</button>'+
-      '<button type="button" class="del" data-act="toggle" aria-pressed="'+(t.done?'true':'false')+'" aria-label="'+(t.done?'取消完成：':'标记完成：')+esc(t.text)+'">×</button></li>';
+      todayBtn+
+      xBtn+'</li>';
   }
 
   function updateTodo(){
     var host=document.getElementById('todoLists'); if(!host)return;
     var todayList=todos.filter(function(t){return t.today&&!t.done});
     var backlog=todos.filter(function(t){return !t.today&&!t.done});
-    var allList=backlog.concat(todos.filter(function(t){return !t.today&&t.done}));
+    var doneList=todos.filter(function(t){return t.done});
     function panel(key,list){
       if(!todos.length){
         return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><strong>还没有待办事项</strong><span>在上面写一条，点「添加」就记下来了。</span></div></div>';
       }
       if(!list.length){
-        var msg=key==='today'?'今天代办里还没有事。在 List 里点某一条的「今天」，就会放进来。':'List 里还没有事。没排进今天的待办都在这里。';
+        var msg=key==='today'?'今天代办里还没有事。在 List 里点某一条的「今天」，就会放进来。':key==='done'?'还没有已完成的事项。做完了的会到这里来。':'List 里还没有事。没排进今天的待办都在这里。';
         return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><span>'+msg+'</span></div></div>';
       }
-      return '<ul class="panel" data-panel="'+key+'" style="list-style:none;margin:0;padding:0">'+list.map(rowHtml).join('')+'</ul>';
+      var rows=list.map(rowHtml).join('');
+      if(key==='done'){
+        rows='<li class="clearbar fold"><span>已完成共 '+list.length+' 件</span><button type="button" class="act ghost" data-act="clear-done" aria-label="清空已完成"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> 清空</button></li>'+rows;
+      }
+      return '<ul class="panel" data-panel="'+key+'" style="list-style:none;margin:0;padding:0">'+rows+'</ul>';
     }
     host.innerHTML=
       bandHtml({button:true,color:'gold',n:todayList.length,title:'今天代办',desc:'今天要做的事',fold:'today'})+panel('today',todayList)+
-      bandHtml({button:true,color:'clay',n:backlog.length,title:'List',desc:'还没排进今天的待办',fold:'all'})+panel('all',allList);
+      bandHtml({button:true,color:'clay',n:backlog.length,title:'List',desc:'还没排进今天的待办',fold:'all'})+panel('all',backlog)+
+      bandHtml({button:true,color:'sand',n:doneList.length,title:'已完成',desc:'做完了的都在这里',fold:'done'})+panel('done',doneList);
     applyFolds();
   }
 
@@ -810,6 +819,12 @@ button{font-family:inherit}
     }else if(act==='today'){
       t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
       t.today=!t.today; sfx('tick'); save(K.todo,todos); updateTodo();
+    }else if(act==='del'){
+      t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
+      todos.splice(todos.indexOf(t),1); sfx('del'); save(K.todo,todos); updateTodo();
+    }else if(act==='clear-done'){
+      for(var ci=todos.length-1;ci>=0;ci--){if(todos[ci].done)todos.splice(ci,1);}
+      sfx('clear'); save(K.todo,todos); updateTodo();
     }else if(act==='voice'){
       var form=el.closest('form');
       toggleVoice(el,form?form.querySelector('input'):null);
