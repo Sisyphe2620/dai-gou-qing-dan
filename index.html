@@ -155,6 +155,16 @@ button{font-family:inherit}
   function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
   function isObj(v){return v&&typeof v==='object'&&!Array.isArray(v)}
   var todos=load(K.todo,[]); if(!Array.isArray(todos))todos=[];
+  /* One-time seed (2026-11-22): the six todos he asked to put on
+     today's list. Runs once — adds any that aren't already there
+     (matched by exact text), then sets a flag so it never repeats. */
+  if(!load('todo-seed-20261122',false)){
+    var seed=['看一下房梁的聊天记录','看书','看CNC的教学','测试 Neon Block Pop 游戏','了解用像素贴图的方式做三维游戏','发布 Neon Block Pop 到网页游戏网站'];
+    var have={}; todos.forEach(function(t){have[t.text]=1});
+    var add=seed.filter(function(s){return !have[s]}).map(function(s){return {id:uid(),text:s,done:false,today:true}});
+    todos=add.concat(todos);
+    save(K.todo,todos); save('todo-seed-20261122',true);
+  }
   var bought=load(K.bought,{}); if(!isObj(bought))bought={};
   var gone=load(K.gone,[]); if(!Array.isArray(gone))gone=[];
   var imgs=load(K.img,{}); if(!isObj(imgs))imgs={};
