@@ -65,9 +65,8 @@ button{font-family:inherit}
 .fold-row{display:flex;align-items:center;gap:4px;min-height:64px;padding:6px 6px 6px 8px;transform-origin:50% 0}
 .fold-row:nth-child(odd){background:linear-gradient(#fff 0%,var(--crease) 100%)}
 .fold-row:nth-child(even){background:linear-gradient(var(--crease) 0%,#fff 100%)}
-.check{flex:none;width:48px;height:48px;border:0;background:none;cursor:pointer;display:grid;place-items:center;padding:0}
-.check i{width:26px;height:26px;border:2px solid var(--ink);border-radius:50%;display:grid;place-items:center;color:transparent;font-style:normal;font-size:14px;font-weight:700}
-.done .check i{background:var(--ink);border-color:var(--ink);color:var(--sand)}
+.num{flex:none;width:48px;text-align:center;font-family:var(--display);font-weight:300;font-size:22px;line-height:1;color:var(--ink-2);font-variant-numeric:tabular-nums;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.done .num{color:#B9BFA9}
 .t{flex:1;min-width:0;font-size:16px;line-height:1.45;overflow-wrap:anywhere;padding:4px 0}
 .done .t{text-decoration:line-through;color:#8C9A96}
 .today-btn{flex:none;height:34px;padding:0 12px;border:2px solid #D8CCB8;background:#fff;color:var(--ink-2);font-size:13px;font-weight:700;cursor:pointer}
@@ -117,7 +116,6 @@ button{font-family:inherit}
 .howto h4{margin:0 0 8px;font-size:15px;letter-spacing:.08em}
 .howto p{margin:0;font-size:14px;line-height:1.85}
 .home-bands{display:grid}
-.sfx{position:fixed;right:max(12px,calc(50% - 248px));bottom:16px;width:44px;height:44px;border:2px solid var(--ink);background:var(--card);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0;z-index:9}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:min(440px,calc(100% - 32px));background:var(--ink);color:#fff;padding:12px 16px;font-size:14px;line-height:1.5;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
 .toast.show{opacity:1}
 @media (prefers-reduced-motion:reduce){
@@ -129,7 +127,6 @@ button{font-family:inherit}
 <body>
 <div id="app" class="app"></div>
 <input type="file" id="imgInput" accept="image/*" hidden>
-<button type="button" id="sfxBtn" class="sfx"></button>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -243,29 +240,24 @@ button{font-family:inherit}
     if(AC.state==='suspended'){try{AC.resume()}catch(e){}}
     return AC;
   }
-  /* One soft singing-bowl-like voice: slow linear swell, then a long
-     exponential fade. Fundamental plus a very quiet octave, so it
-     stays warm with no bright ringing. `type` is kept for call-site
-     compatibility and always renders as sine partials. */
+  /* One bright pluck: triangle wave, fast attack, quick decay —
+     a clear kalimba-like note, easy to tell apart from the next
+     one. `type` is kept for call-site compatibility. */
   function tone(f,t0,dur,type,vol,f2){
     var a=sfxOn&&ac(); if(!a)return;
     var t=a.currentTime+(t0||0);
     var voice=a.createGain();
-    var atk=Math.min(.25,Math.max(.08,dur*.35));
     voice.gain.setValueAtTime(.0001,t);
-    voice.gain.linearRampToValueAtTime(vol||.13,t+atk);
+    voice.gain.linearRampToValueAtTime(vol||.16,t+.015);
     voice.gain.exponentialRampToValueAtTime(.0001,t+dur);
     voice.connect(master);
-    var parts=[[1,1],[2,.1]];
-    for(var i=0;i<parts.length;i++){
-      var o=a.createOscillator(),og=a.createGain();
-      o.type='sine';
-      o.frequency.setValueAtTime(f*parts[i][0],t);
-      if(f2)o.frequency.exponentialRampToValueAtTime(f2*parts[i][0],t+dur);
-      og.gain.value=parts[i][1];
-      o.connect(og); og.connect(voice);
-      o.start(t); o.stop(t+dur+.1);
-    }
+    var o=a.createOscillator(),og=a.createGain();
+    o.type='triangle';
+    o.frequency.setValueAtTime(f,t);
+    if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+    og.gain.value=1;
+    o.connect(og); og.connect(voice);
+    o.start(t); o.stop(t+dur+.05);
   }
   /* Soft breath: noise through a gentle lowpass sweep, slow swell,
      long fade — a quiet exhale, never a click or hiss. */
@@ -279,25 +271,23 @@ button{font-family:inherit}
     g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(Math.min(vol,.06),t+atk); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t+dur+.1);
   }
-  /* Warm singing-bowl family, same recipe as the diet page (slow
-     swell, long tail, quiet octave, warm lowpass + light delay) but
-     a different pitch set — C5/G4/E5/D5/B4 instead of the diet
-     page's A4/E4 — so it feels related, not identical. UI sounds
-     run 0.8–1.2s, shorter than the diet page's 1.9s. */
+  /* Bright pluck family: short kalimba-like notes, each action on
+     its own pitch so you can tell them apart. UI sounds run
+     0.22–0.6s. */
   var SFX={
-    pop:function(){tone(523.25,0,.9,'sine',.14,587.33)},
-    done:function(){tone(523.25,0,1,'sine',.13);tone(659.25,.15,1,'sine',.12);tone(783.99,.3,1.1,'sine',.11)},
-    undo:function(){tone(659.25,0,1,'sine',.12,523.25)},
-    tick:function(){tone(587.33,0,.8,'sine',.10)},
-    nav:function(){tone(392,0,1,'sine',.12,523.25)},
+    pop:function(){tone(659.25,0,.35,'sine',.16)},
+    done:function(){tone(523.25,0,.45,'sine',.16);tone(659.25,.11,.45,'sine',.15);tone(783.99,.22,.55,'sine',.14)},
+    undo:function(){tone(659.25,0,.35,'sine',.14);tone(523.25,.09,.4,'sine',.12)},
+    tick:function(){tone(880,0,.22,'sine',.13)},
+    nav:function(){tone(440,0,.3,'sine',.14);tone(587.33,.07,.3,'sine',.12)},
     paper:function(){noise(0,.5,900,1800,.05,1)},
-    del:function(){tone(392,0,1.1,'sine',.13,293.66)},
-    buy:function(){tone(523.25,0,1.1,'sine',.13);tone(659.25,.15,1.1,'sine',.12);tone(783.99,.3,1.2,'sine',.11)},
-    restore:function(){tone(392,0,1,'sine',.12);tone(523.25,.15,1,'sine',.11)},
-    clear:function(){tone(587.33,0,1.1,'sine',.12,493.88)},
-    shutter:function(){tone(659.25,0,.8,'sine',.12);tone(587.33,.12,.9,'sine',.10)},
-    unfold:function(d){tone(523.25,0,d,'sine',.11,659.25);noise(0,d,700,2000,.04,1)},
-    fold:function(d){tone(659.25,0,d,'sine',.11,523.25);noise(0,d,2000,700,.04,1)}
+    del:function(){tone(392,0,.35,'sine',.14);tone(311.13,.07,.4,'sine',.12)},
+    buy:function(){tone(523.25,0,.45,'sine',.16);tone(659.25,.11,.45,'sine',.15);tone(783.99,.22,.55,'sine',.14)},
+    restore:function(){tone(392,0,.35,'sine',.14);tone(523.25,.09,.4,'sine',.13)},
+    clear:function(){tone(587.33,0,.35,'sine',.13);tone(493.88,.09,.4,'sine',.12)},
+    shutter:function(){tone(740,0,.25,'sine',.14);tone(622.25,.07,.3,'sine',.12)},
+    unfold:function(d){tone(523.25,0,d,'sine',.13,659.25);noise(0,d,700,2000,.04,1)},
+    fold:function(d){tone(659.25,0,d,'sine',.13,523.25);noise(0,d,2000,700,.04,1)}
   };
   function sfx(n,a){if(sfxOn&&SFX[n])SFX[n](a)}
   /* Confetti burst for completing a todo: colourful paper pieces
@@ -342,14 +332,6 @@ button{font-family:inherit}
     })(start);
   }
   document.addEventListener('pointerdown',function(){if(sfxOn)ac()},{passive:true});
-  var sfxBtn=document.getElementById('sfxBtn');
-  function paintSfx(){
-    sfxBtn.setAttribute('aria-pressed',sfxOn?'true':'false');
-    sfxBtn.setAttribute('aria-label',sfxOn?'音效：开':'音效：关');
-    sfxBtn.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>'+(sfxOn?'<path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>':'<path d="M16 9.5l5 5M21 9.5l-5 5"/>')+'</svg>';
-  }
-  sfxBtn.addEventListener('click',function(){sfxOn=!sfxOn;save('sfx-v1',sfxOn);paintSfx();if(sfxOn)sfx('pop')});
-  paintSfx();
 
   /* ---------- views ---------- */
   function viewHome(){
@@ -375,10 +357,10 @@ button{font-family:inherit}
 
   function rowHtml(t,i){
     return '<li class="fold fold-row'+(t.done?' done':'')+'" style="--i:'+i+'" data-id="'+esc(t.id)+'">'+
-      '<button type="button" class="check" data-act="toggle" aria-pressed="'+(t.done?'true':'false')+'" aria-label="'+(t.done?'取消完成：':'标记完成：')+esc(t.text)+'"><i>✓</i></button>'+
+      '<span class="num" data-drag>'+pad(i+1)+'</span>'+
       '<span class="t">'+esc(t.text)+'</span>'+
       '<button type="button" class="today-btn'+(t.today?' on':'')+'" data-act="today" aria-pressed="'+(t.today?'true':'false')+'">今天</button>'+
-      '<button type="button" class="del" data-act="del" aria-label="删除：'+esc(t.text)+'">×</button></li>';
+      '<button type="button" class="del" data-act="toggle" aria-pressed="'+(t.done?'true':'false')+'" aria-label="'+(t.done?'取消完成：':'标记完成：')+esc(t.text)+'">×</button></li>';
   }
 
   function updateTodo(){
@@ -489,6 +471,77 @@ button{font-family:inherit}
   }
   $app.addEventListener('pointerup',endDrag);
   $app.addEventListener('pointercancel',endDrag);
+
+  /* ---------- todo reorder: press the serial number and drag up/down ----------
+     The number is the handle (touch-action:none), so dragging it never
+     scrolls the page. Tapping a button (× / 今天) still works as a tap:
+     drag only starts after the finger moves 6px, and only from the number.
+     On drop, the underlying todos array is reordered so the numbers
+     (rendered from the index) follow the new top-to-bottom order. */
+  var rowDrag=null;
+  function rowListOf(row){return row.closest('ul.panel')}
+  function rowEls(list){return Array.prototype.slice.call(list.querySelectorAll('li.fold-row'))}
+  $app.addEventListener('pointerdown',function(e){
+    var handle=e.target.closest('.num'); if(!handle)return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    var row=handle.closest('li.fold-row'); if(!row)return;
+    var list=rowListOf(row); if(!list)return;
+    var rows=rowEls(list);
+    rowDrag={id:row.getAttribute('data-id'),row:row,list:list,rows:rows,idx:rows.indexOf(row),
+      y0:e.clientY,top0:row.offsetTop,h:row.offsetHeight,
+      tops:rows.map(function(r){return r.offsetTop}),
+      hs:rows.map(function(r){return r.offsetHeight}),
+      moved:false,pid:e.pointerId,target:rows.indexOf(row),
+      done:row.classList.contains('done')};
+    try{row.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  $app.addEventListener('pointermove',function(e){
+    if(!rowDrag||e.pointerId!==rowDrag.pid)return;
+    var dy=e.clientY-rowDrag.y0;
+    if(!rowDrag.moved&&Math.abs(dy)<6)return;
+    rowDrag.moved=true;
+    var d=rowDrag;
+    d.row.style.transform='translateY('+dy+'px) scale(1.02)';
+    d.row.style.zIndex='5';
+    d.row.style.boxShadow='0 8px 20px rgba(0,0,0,.18)';
+    var centre=d.top0+dy+d.h/2;
+    var insert=0;
+    d.rows.forEach(function(r,i){
+      if(i===d.idx)return;
+      if(centre>d.tops[i]+d.hs[i]/2)insert++;
+    });
+    var undoneN=d.rows.filter(function(r){return !r.classList.contains('done')}).length;
+    var lo=d.done?undoneN:0, hi=d.done?d.rows.length-1:undoneN-1;
+    d.target=Math.max(lo,Math.min(hi,insert));
+    d.rows.forEach(function(r,i){
+      if(i===d.idx)return;
+      var shift=0;
+      if(d.idx<d.target&&i>d.idx&&i<=d.target)shift=-d.h;
+      if(d.idx>d.target&&i<d.idx&&i>=d.target)shift=d.h;
+      r.style.transform=shift?'translateY('+shift+'px)':'';
+    });
+  });
+  function endRowDrag(e){
+    if(!rowDrag||e.pointerId!==rowDrag.pid)return;
+    var d=rowDrag; rowDrag=null;
+    d.rows.forEach(function(r){r.style.transform='';r.style.zIndex='';r.style.boxShadow=''});
+    if(!d.moved)return;
+    var from=d.idx,to=d.target;
+    if(from===to)return;
+    var listTodos=d.rows.map(function(r){
+      var id=r.getAttribute('data-id');
+      return todos.filter(function(x){return x.id===id})[0];
+    }).filter(Boolean);
+    var dragged=listTodos[from], targetTodo=listTodos[to];
+    if(!dragged||!targetTodo)return;
+    todos.splice(todos.indexOf(dragged),1);
+    var ti=todos.indexOf(targetTodo);
+    if(to>from)ti=ti+1;
+    todos.splice(ti,0,dragged);
+    save(K.todo,todos); updateTodo();
+  }
+  $app.addEventListener('pointerup',endRowDrag);
+  $app.addEventListener('pointercancel',endRowDrag);
 
   function viewShop(){
     var a=activeItems();
@@ -629,8 +682,6 @@ button{font-family:inherit}
     }else if(act==='today'){
       t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
       t.today=!t.today; sfx('tick'); save(K.todo,todos); updateTodo();
-    }else if(act==='del'){
-      sfx('del'); todos=todos.filter(function(x){return x.id!==id}); save(K.todo,todos); updateTodo();
     }else if(act==='chip'){
       sfx('tick'); ui[el.getAttribute('data-group')]=el.getAttribute('data-val');
       var sibs=el.parentNode.querySelectorAll('.chip');
