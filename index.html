@@ -560,6 +560,53 @@ button{font-family:inherit}
   $app.addEventListener('pointerup',endRowDrag);
   $app.addEventListener('pointercancel',endRowDrag);
 
+  /* ---------- long-press a todo row to drag it (whole row, not just the number) ----------
+     Press and hold the row text for ~350ms until it lifts, then drag up/down.
+     A quick drag still scrolls the page: the hold is cancelled if the finger
+     moves more than 10px before the timer fires. While a long-press drag is
+     active, touchmove is cancelled so the page does not scroll underneath. */
+  var rowHold=null;
+  $app.addEventListener('pointerdown',function(e){
+    if(e.target.closest('.num')||e.target.closest('button'))return;
+    var row=e.target.closest('li.fold-row'); if(!row)return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    var list=rowListOf(row); if(!list)return;
+    var rows=rowEls(list);
+    rowHold={row:row,list:list,rows:rows,pid:e.pointerId,y0:e.clientY,x0:e.clientX,
+      timer:setTimeout(function(){
+        if(!rowHold)return;
+        var h=rowHold; rowHold=null;
+        var r=h.row;
+        rowDrag={id:r.getAttribute('data-id'),row:r,list:h.list,rows:h.rows,idx:h.rows.indexOf(r),
+          y0:h.y0,top0:r.offsetTop,h:r.offsetHeight,
+          tops:h.rows.map(function(x){return x.offsetTop}),
+          hs:h.rows.map(function(x){return x.offsetHeight}),
+          moved:false,pid:h.pid,target:h.rows.indexOf(r),
+          done:r.classList.contains('done'),longPress:true};
+        r.style.transform='scale(1.02)';
+        r.style.zIndex='5';
+        r.style.boxShadow='0 8px 20px rgba(0,0,0,.18)';
+        if(navigator.vibrate){try{navigator.vibrate(10)}catch(_){}}
+        try{r.setPointerCapture(h.pid)}catch(_){}
+      },350)};
+  });
+  $app.addEventListener('pointermove',function(e){
+    if(rowHold&&e.pointerId===rowHold.pid){
+      if(Math.abs(e.clientY-rowHold.y0)>10||Math.abs(e.clientX-rowHold.x0)>10){
+        clearTimeout(rowHold.timer); rowHold=null;
+      }
+    }
+  });
+  $app.addEventListener('pointerup',function(e){
+    if(rowHold&&e.pointerId===rowHold.pid){clearTimeout(rowHold.timer);rowHold=null;}
+  });
+  $app.addEventListener('pointercancel',function(e){
+    if(rowHold&&e.pointerId===rowHold.pid){clearTimeout(rowHold.timer);rowHold=null;}
+  });
+  $app.addEventListener('touchmove',function(e){
+    if(rowDrag&&rowDrag.longPress)e.preventDefault();
+  },{passive:false});
+
   function viewShop(){
     var a=activeItems();
     var buyN=a.filter(function(i){return i.cat==='buy'}).length;
