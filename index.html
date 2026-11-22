@@ -49,7 +49,7 @@ button{font-family:inherit}
 .c-sand .bar{background:var(--clay)}
 .c-clay{background:var(--clay);color:var(--on-clay)}
 .c-clay .bar{background:rgba(255,255,255,.55)}
-.fold-band{touch-action:none;user-select:none;-webkit-user-select:none}
+.fold-band{touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .fold-band::before{content:"";position:absolute;left:50%;bottom:7px;width:44px;height:4px;margin-left:-22px;background:currentColor;opacity:.3;border-radius:2px;transition:opacity .2s}
 .fold-band[aria-expanded="true"]::before{opacity:.55}
 
@@ -483,7 +483,11 @@ button{font-family:inherit}
     animateTo(d.key,target);
   }
   $app.addEventListener('pointerup',endDrag);
-  $app.addEventListener('pointercancel',endDrag);
+  $app.addEventListener('pointercancel',function(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    var d=drag; drag=null;
+    animateTo(d.key,d.p0>0.5?1:0);
+  });
 
   /* ---------- todo reorder: press the serial number and drag up/down ----------
      The number is the handle (touch-action:none), so dragging it never
