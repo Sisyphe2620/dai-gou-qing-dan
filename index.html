@@ -276,7 +276,7 @@ button{font-family:inherit}
      run 0.8–1.2s, shorter than the diet page's 1.9s. */
   var SFX={
     pop:function(){tone(523.25,0,.9,'sine',.14,587.33)},
-    done:function(){tone(523.25,0,1,'sine',.13);tone(659.25,.18,1,'sine',.11)},
+    done:function(){tone(523.25,0,1,'sine',.13);tone(659.25,.15,1,'sine',.12);tone(783.99,.3,1.1,'sine',.11)},
     undo:function(){tone(659.25,0,1,'sine',.12,523.25)},
     tick:function(){tone(587.33,0,.8,'sine',.10)},
     nav:function(){tone(392,0,1,'sine',.12,523.25)},
@@ -290,6 +290,47 @@ button{font-family:inherit}
     fold:function(d){tone(659.25,0,d,'sine',.11,523.25);noise(0,d,2000,700,.04,1)}
   };
   function sfx(n,a){if(sfxOn&&SFX[n])SFX[n](a)}
+  /* Confetti burst for completing a todo: colourful paper pieces
+     burst from the tap point and scatter down, then fade away.
+     Canvas is pointer-transparent and removed when done, so it
+     never blocks taps or survives a re-render. */
+  function confetti(x,y){
+    var cv=document.createElement('canvas');
+    cv.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9999';
+    cv.width=innerWidth; cv.height=innerHeight;
+    document.body.appendChild(cv);
+    var ctx=cv.getContext('2d');
+    var colors=['#F98093','#F4C542','#5E7A55','#699407','#E85D75','#4A90D9','#9B59B6','#FF8C42','#2EC4B6','#F4FDCE'];
+    var ps=[];
+    for(var i=0;i<110;i++){
+      var a=Math.random()*Math.PI*2, sp=2+Math.random()*8;
+      ps.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-5,
+        w:4+Math.random()*6,h:3+Math.random()*5,
+        c:colors[i%colors.length],r:Math.random()*Math.PI,vr:(Math.random()-.5)*.3,
+        life:1,decay:.01+Math.random()*.012});
+    }
+    var start=performance.now();
+    (function frame(now){
+      ctx.clearRect(0,0,cv.width,cv.height);
+      var alive=false;
+      for(var i=0;i<ps.length;i++){
+        var p=ps[i];
+        p.vy+=.16; p.vx*=.99;
+        p.x+=p.vx; p.y+=p.vy; p.r+=p.vr;
+        p.life-=p.decay;
+        if(p.life>0&&p.y<cv.height+24){
+          alive=true;
+          ctx.save();
+          ctx.globalAlpha=Math.max(0,Math.min(1,p.life*1.6));
+          ctx.translate(p.x,p.y); ctx.rotate(p.r);
+          ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+          ctx.restore();
+        }
+      }
+      if(alive&&now-start<2400)requestAnimationFrame(frame);
+      else cv.remove();
+    })(start);
+  }
   document.addEventListener('pointerdown',function(){if(sfxOn)ac()},{passive:true});
   var sfxBtn=document.getElementById('sfxBtn');
   function paintSfx(){
@@ -340,13 +381,13 @@ button{font-family:inherit}
         return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><strong>还没有待办事项</strong><span>在上面写一条，点「添加」就记下来了。</span></div></div>';
       }
       if(!list.length){
-        return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><span>今天代办里还没有事。在代办清单里点某一条的「今天」，就会放进来。</span></div></div>';
+        return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><span>今天代办里还没有事。在 List 里点某一条的「今天」，就会放进来。</span></div></div>';
       }
       return '<ul class="panel" data-panel="'+key+'" style="list-style:none;margin:0;padding:0">'+list.map(rowHtml).join('')+'</ul>';
     }
     host.innerHTML=
       bandHtml({button:true,color:'gold',n:todayList.length,title:'今天代办',desc:'今天要做的事',fold:'today'})+panel('today',todayList)+
-      bandHtml({button:true,color:'clay',n:undone.length,title:'代办清单',desc:'全部待办事项',fold:'all'})+panel('all',allList);
+      bandHtml({button:true,color:'clay',n:undone.length,title:'List',desc:'全部待办事项',fold:'all'})+panel('all',allList);
     applyFolds();
   }
 
@@ -572,7 +613,9 @@ button{font-family:inherit}
     var t;
     if(act==='toggle'){
       t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
-      t.done=!t.done; sfx(t.done?'done':'undo'); save(K.todo,todos); updateTodo();
+      t.done=!t.done; sfx(t.done?'done':'undo');
+      if(t.done)confetti(e.clientX||innerWidth/2,e.clientY||innerHeight/2);
+      save(K.todo,todos); updateTodo();
     }else if(act==='today'){
       t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
       t.today=!t.today; sfx('tick'); save(K.todo,todos); updateTodo();
