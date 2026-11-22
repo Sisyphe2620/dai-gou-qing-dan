@@ -58,6 +58,9 @@ button{font-family:inherit}
 .add input{flex:1;min-width:0;height:48px;border:2px solid var(--line);border-radius:0;padding:0 12px;font:inherit;background:var(--paper);color:var(--ink)}
 .add input:focus{outline:none;border-color:var(--ink)}
 .add button{flex:none;height:48px;padding:0 18px;border:0;background:var(--ink);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+.add .mic{flex:none;width:48px;height:48px;padding:0;border:2px solid var(--line);background:var(--paper);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.add .mic.on{background:#C0392B;border-color:#C0392B;color:#fff;animation:micpulse 1.2s ease-in-out infinite}
+@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.35)}50%{box-shadow:0 0 0 8px rgba(192,57,43,0)}}
 
 /* folded list */
 .panel{background:#fff;overflow:hidden}
@@ -351,7 +354,9 @@ button{font-family:inherit}
     return '<header class="hero hero-gold">'+back('#home','首页')+'<h1>代办事项</h1>'+
       '<p>下面写一条要做的事，点「今天」就进今天代办。做完了打勾，今天代办里就不再显示；不要了点 × 删掉。</p></header>'+
       '<form class="add" id="addForm" autocomplete="off"><label class="sr" for="newTodo">新的待办</label>'+
-      '<input id="newTodo" type="text" placeholder="写一条要做的事…" maxlength="200"><button type="submit">＋ 添加</button></form>'+
+      '<input id="newTodo" type="text" placeholder="写一条要做的事…" maxlength="200">'+
+      '<button type="button" id="micBtn" class="mic" data-act="voice" aria-label="语音输入"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></button>'+
+      '<button type="submit">＋ 添加</button></form>'+
       '<div id="todoLists"></div>';
   }
 
@@ -659,6 +664,44 @@ button{font-family:inherit}
   }
   window.addEventListener('hashchange',route);
 
+  /* ---------- voice input: browser speech recognition (zh-CN) ----------
+     Tap the mic, speak, and the words land in the input — review them,
+     then tap 添加. Works in Chrome/Edge and Safari 17+. If the browser
+     has no recogniser, the mic shows a hint instead of failing silently. */
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  var rec=null, listening=false;
+  function setListening(on){
+    listening=on;
+    var b=document.getElementById('micBtn'); if(!b)return;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-pressed',on?'true':'false');
+    b.setAttribute('aria-label',on?'正在听…再点一下停止':'语音输入');
+  }
+  function stopVoice(){if(rec){try{rec.stop()}catch(_){}} setListening(false)}
+  function toggleVoice(){
+    if(!SR){toast('这个浏览器不支持语音输入，换 Chrome 或更新 iOS 再试');return}
+    if(listening){stopVoice();return}
+    var inp=document.getElementById('newTodo'); if(!inp)return;
+    rec=new SR();
+    rec.lang='zh-CN';
+    rec.interimResults=true;
+    rec.continuous=false;
+    rec.onresult=function(e){
+      var txt='';
+      for(var i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;
+      inp.value=txt;
+    };
+    rec.onend=function(){setListening(false)};
+    rec.onerror=function(ev){
+      setListening(false);
+      if(ev.error==='not-allowed')toast('麦克风没开权限，点地址栏旁边的锁打开');
+      else if(ev.error==='no-speech')toast('没听到声音，再说一遍');
+      else if(ev.error==='aborted')return;
+      else toast('语音识别出问题了，再试一次');
+    };
+    try{rec.start();setListening(true)}catch(_){setListening(false)}
+  }
+
   /* ---------- events ---------- */
   $app.addEventListener('click',function(e){
     var f=e.target.closest('a[data-focus]');
@@ -682,6 +725,8 @@ button{font-family:inherit}
     }else if(act==='today'){
       t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
       t.today=!t.today; sfx('tick'); save(K.todo,todos); updateTodo();
+    }else if(act==='voice'){
+      toggleVoice();
     }else if(act==='chip'){
       sfx('tick'); ui[el.getAttribute('data-group')]=el.getAttribute('data-val');
       var sibs=el.parentNode.querySelectorAll('.chip');
@@ -702,6 +747,7 @@ button{font-family:inherit}
   $app.addEventListener('submit',function(e){
     if(e.target.id!=='addForm')return;
     e.preventDefault();
+    stopVoice();
     var inp=document.getElementById('newTodo');
     var text=inp.value.trim(); if(!text)return;
     sfx('pop'); todos.unshift({id:uid(),text:text,done:false,today:false});
