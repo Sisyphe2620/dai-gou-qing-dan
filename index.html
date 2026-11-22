@@ -97,7 +97,8 @@ button{font-family:inherit}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;height:36px;padding:0 14px;border:2px solid var(--line);background:#fff;font-size:14px;color:var(--ink);cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-.card{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;padding:16px;background:#fff;border-bottom:1px solid var(--line)}
+.card{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;padding:16px;background:#fff;border-bottom:1px solid var(--line);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.card-ph{border:2px dashed var(--gold);border-radius:12px;background:rgba(212,175,55,.10);box-sizing:border-box}
 .card:nth-child(odd){background:linear-gradient(#fff 0%,var(--crease) 100%)}
 .card:nth-child(even){background:linear-gradient(var(--crease) 0%,#fff 100%)}
 .pic{width:104px;aspect-ratio:3/4;border:0;padding:0;background:var(--paper);cursor:pointer;overflow:hidden;align-self:start}
@@ -155,7 +156,7 @@ button{font-family:inherit}
   var TYPES=['玩具类','工具类','厨具类','日用品','食物'];
 
   /* ---------- storage ---------- */
-  var K={todo:'todo-items-v1',bought:'daigou-purchased-v1',gone:'daigou-gone-v1',img:'daigou-img-v1',custom:'daigou-custom-v1'};
+  var K={todo:'todo-items-v1',bought:'daigou-purchased-v1',gone:'daigou-gone-v1',img:'daigou-img-v1',custom:'daigou-custom-v1',order:'daigou-order-v1',cat:'daigou-cat-v1'};
   function load(k,fb){try{var r=localStorage.getItem(k);if(r!==null)return JSON.parse(r)}catch(e){}return fb}
   function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
   function isObj(v){return v&&typeof v==='object'&&!Array.isArray(v)}
@@ -177,6 +178,32 @@ button{font-family:inherit}
      kept in localStorage and merged with the built-in ITEMS. */
   var custom=load(K.custom,[]); if(!Array.isArray(custom))custom=[];
   function allItems(){return ITEMS.concat(custom)}
+
+  /* Shop drag order + category overrides (drag a card to reorder, or
+     across sections to switch 待购买 / 等折扣). Persisted in localStorage. */
+  var shopOrder=load(K.order,{buy:[],wait:[]}); if(!isObj(shopOrder))shopOrder={buy:[],wait:[]};
+  if(!Array.isArray(shopOrder.buy))shopOrder.buy=[];
+  if(!Array.isArray(shopOrder.wait))shopOrder.wait=[];
+  var catOv=load(K.cat,{}); if(!isObj(catOv))catOv={};
+  function effCat(it){return catOv[it.id]||it.cat}
+  function syncShopOrder(){
+    var act=activeItems(),changed=false;
+    ['buy','wait'].forEach(function(c){
+      var cur=(shopOrder[c]||[]).filter(function(id){
+        var it=act.filter(function(x){return x.id===id})[0];
+        return it&&effCat(it)===c;
+      });
+      act.forEach(function(it){
+        if(effCat(it)===c&&cur.indexOf(it.id)<0){cur.push(it.id);changed=true}
+      });
+      if(cur.length!==(shopOrder[c]||[]).length)changed=true;
+      shopOrder[c]=cur;
+    });
+    Object.keys(catOv).forEach(function(id){
+      if(!allItems().filter(function(x){return x.id===id})[0]){delete catOv[id];changed=true}
+    });
+    if(changed){save(K.order,shopOrder);save(K.cat,catOv)}
+  }
 
   /* 旧版商品 id → 新版 id 映射（2026-11-21 换版时保留已购/换图数据） */
   (function(){
@@ -625,8 +652,119 @@ button{font-family:inherit}
     if(rowHold&&e.pointerId===rowHold.pid){clearTimeout(rowHold.timer);rowHold=null;}
   });
   $app.addEventListener('touchmove',function(e){
-    if(rowDrag&&rowDrag.longPress)e.preventDefault();
+    if((rowDrag&&rowDrag.longPress)||shopDrag)e.preventDefault();
   },{passive:false});
+
+  /* ---------- shop card drag: reorder within a section, or across
+     sections to switch 待购买 / 等折扣. Long-press a card to pick it up;
+     a ghost follows the finger and a dashed placeholder shows the drop spot.
+     Only active (buy/wait) cards are draggable, not bought ones. ---------- */
+  var shopDrag=null, shopHold=null;
+  function shopPanelOf(card){return card.closest('div.panel')}
+  function shopCards(panel){return Array.prototype.slice.call(panel.querySelectorAll('article.card'))}
+  function shopSecOf(panel){var s=panel.closest('section.sec');return s?s.id.replace('sec-',''):null}
+  $app.addEventListener('pointerdown',function(e){
+    if(e.target.closest('button,a,input,textarea'))return;
+    var card=e.target.closest('article.card'); if(!card)return;
+    if(card.closest('#sec-done'))return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    var panel=shopPanelOf(card); if(!panel)return;
+    var cat=shopSecOf(panel); if(cat!=='buy'&&cat!=='wait')return;
+    shopHold={card:card,pid:e.pointerId,y0:e.clientY,x0:e.clientX,cat:cat,
+      timer:setTimeout(function(){
+        if(!shopHold)return;
+        var h=shopHold; shopHold=null;
+        var c=h.card, r=c.getBoundingClientRect();
+        var ghost=c.cloneNode(true);
+        ghost.style.cssText='position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;z-index:9999;pointer-events:none;box-shadow:0 12px 28px rgba(0,0,0,.28);transform:scale(1.02);opacity:.97;margin:0';
+        document.body.appendChild(ghost);
+        var ph=document.createElement('div');
+        ph.className='card-ph';
+        ph.style.height=r.height+'px';
+        c.parentNode.replaceChild(ph,c);
+        shopDrag={id:c.getAttribute('data-id'),srcCat:h.cat,ghost:ghost,ph:ph,
+          pid:h.pid,x0:h.x0,y0:h.y0,target:h.cat};
+        if(navigator.vibrate){try{navigator.vibrate(10)}catch(_){}}
+      },350)};
+  });
+  $app.addEventListener('pointermove',function(e){
+    if(shopHold&&e.pointerId===shopHold.pid){
+      if(Math.abs(e.clientY-shopHold.y0)>10||Math.abs(e.clientX-shopHold.x0)>10){
+        clearTimeout(shopHold.timer); shopHold=null;
+      }
+      return;
+    }
+    if(!shopDrag||e.pointerId!==shopDrag.pid)return;
+    var d=shopDrag;
+    var dx=e.clientX-d.x0, dy=e.clientY-d.y0;
+    d.ghost.style.transform='translate('+dx+'px,'+dy+'px) scale(1.02)';
+    if(e.clientY<70)window.scrollBy(0,-12);
+    else if(e.clientY>innerHeight-70)window.scrollBy(0,12);
+    var buySec=document.getElementById('sec-buy'), waitSec=document.getElementById('sec-wait');
+    var target=d.target;
+    if(buySec&&waitSec){
+      var br=buySec.getBoundingClientRect(), wr=waitSec.getBoundingClientRect();
+      if(e.clientY<br.bottom)target='buy';
+      else if(e.clientY>wr.top)target='wait';
+      else target=(e.clientY<(br.bottom+wr.top)/2)?'buy':'wait';
+    }
+    d.target=target;
+    var panel=document.querySelector('#sec-'+target+' div.panel');
+    if(!panel)return;
+    var cards=shopCards(panel);
+    var insert=0;
+    cards.forEach(function(cd){
+      var cr=cd.getBoundingClientRect();
+      if(e.clientY>cr.top+cr.height/2)insert++;
+    });
+    var ref=cards[insert]||null;
+    if(d.ph.parentNode!==panel||d.ph.nextSibling!==ref){
+      if(ref)panel.insertBefore(d.ph,ref);
+      else panel.appendChild(d.ph);
+    }
+  });
+  function endShopDrag(e){
+    if(shopHold&&e.pointerId===shopHold.pid){clearTimeout(shopHold.timer);shopHold=null;return}
+    if(!shopDrag||e.pointerId!==shopDrag.pid)return;
+    var d=shopDrag; shopDrag=null;
+    var ghost=d.ghost, ph=d.ph;
+    if(ghost.parentNode)ghost.parentNode.removeChild(ghost);
+    if(e.type==='pointercancel'){renderShopLists();return}
+    var panel=ph.parentNode;
+    var targetCat=panel?shopSecOf(panel):d.srcCat;
+    if(targetCat!=='buy'&&targetCat!=='wait')targetCat=d.srcCat;
+    var cards=panel?shopCards(panel):[];
+    var beforeId=null;
+    if(panel){
+      var sib=ph.nextSibling;
+      while(sib&&!(sib.classList&&sib.classList.contains('card')))sib=sib.nextSibling;
+      if(sib)beforeId=sib.getAttribute('data-id');
+    }
+    syncShopOrder();
+    var srcArr=shopOrder[d.srcCat]||[], tgtArr=shopOrder[targetCat]||[];
+    var si=srcArr.indexOf(d.id); if(si>=0)srcArr.splice(si,1);
+    if(targetCat!==d.srcCat){
+      var ti=tgtArr.indexOf(d.id); if(ti>=0)tgtArr.splice(ti,1);
+      catOv[d.id]=targetCat;
+    }
+    var full=(targetCat===d.srcCat)?srcArr:tgtArr;
+    if(beforeId){
+      var bi=full.indexOf(beforeId);
+      if(bi>=0)full.splice(bi,0,d.id);
+      else full.push(d.id);
+    }else{
+      var lastVis=cards.length?cards[cards.length-1].getAttribute('data-id'):null;
+      var li=lastVis?full.indexOf(lastVis):-1;
+      if(li>=0)full.splice(li+1,0,d.id);
+      else full.push(d.id);
+    }
+    shopOrder[d.srcCat]=srcArr; shopOrder[targetCat]=tgtArr;
+    save(K.order,shopOrder); save(K.cat,catOv);
+    sfx('tick');
+    renderShopLists();
+  }
+  $app.addEventListener('pointerup',endShopDrag);
+  $app.addEventListener('pointercancel',endShopDrag);
 
   function viewShop(){
     var a=activeItems();
@@ -708,9 +846,18 @@ button{font-family:inherit}
   function renderShopLists(){
     var host=document.getElementById('shopLists'); if(!host)return;
     expire();
+    syncShopOrder();
     var act=activeItems().filter(matches);
-    var buy=act.filter(function(i){return i.cat==='buy'});
-    var wait=act.filter(function(i){return i.cat==='wait'});
+    function sortShop(list,cat){
+      var ord=shopOrder[cat]||[];
+      return list.slice().sort(function(a,b){
+        var ai=ord.indexOf(a.id),bi=ord.indexOf(b.id);
+        if(ai<0)ai=1e9; if(bi<0)bi=1e9;
+        return ai-bi;
+      });
+    }
+    var buy=sortShop(act.filter(function(i){return effCat(i)==='buy'}),'buy');
+    var wait=sortShop(act.filter(function(i){return effCat(i)==='wait'}),'wait');
     var allBought=boughtItems();
     var done=allBought.filter(matches).sort(function(a,b){return bought[b.id]-bought[a.id]});
     var nomatch='<div class="nomatch fold">这一栏没有符合当前筛选的商品。</div>';
