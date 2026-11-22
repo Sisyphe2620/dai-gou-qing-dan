@@ -362,7 +362,7 @@ button{font-family:inherit}
 
   function viewTodo(){
     return '<header class="hero hero-gold">'+back('#home','首页')+'<h1>代办事项</h1>'+
-      '<p>下面写一条要做的事，点「今天」就进今天代办。做完了点 ×，进下面的「已完成」；在「已完成」里再点 × 就是彻底删掉，点垃圾桶一次清空全部已完成。</p></header>'+
+      '<p>下面写一条要做的事。List 里点「今天」进今天代办，今天代办里点「List」回 List。做完了点 ×，进下面的「已完成」；在「已完成」里点「恢复」回 List，点 × 是彻底删掉，点垃圾桶一次清空全部已完成。</p></header>'+
       '<form class="add" id="addForm" autocomplete="off"><label class="sr" for="newTodo">新的待办</label>'+
       '<input id="newTodo" type="text" placeholder="写一条要做的事…" maxlength="200">'+
       '<button type="button" id="micBtn" class="mic" data-act="voice" aria-label="语音输入"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></button>'+
@@ -374,12 +374,19 @@ button{font-family:inherit}
     var xBtn=t.done
       ?'<button type="button" class="del" data-act="del" aria-label="删除：'+esc(t.text)+'">×</button>'
       :'<button type="button" class="del" data-act="toggle" aria-pressed="false" aria-label="标记完成：'+esc(t.text)+'">×</button>';
-    var todayBtn=(!t.done&&key==='all')?'<button type="button" class="today-btn" data-act="today" aria-pressed="false">今天</button>':'';
+    var moveBtn='';
+    if(t.done){
+      moveBtn='<button type="button" class="today-btn" data-act="restore-todo" aria-label="恢复：'+esc(t.text)+'">恢复</button>';
+    }else if(key==='today'){
+      moveBtn='<button type="button" class="today-btn" data-act="today" aria-pressed="true">List</button>';
+    }else if(key==='all'){
+      moveBtn='<button type="button" class="today-btn" data-act="today" aria-pressed="false">今天</button>';
+    }
     var editBtn='<button type="button" class="edit-btn" data-act="edit" aria-label="编辑：'+esc(t.text)+'"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
     return '<li class="fold fold-row'+(t.done?' done':'')+'" style="--i:'+i+'" data-id="'+esc(t.id)+'">'+
       '<span class="num" data-drag>'+pad(i+1)+'</span>'+
       '<span class="t">'+esc(t.text)+'</span>'+
-      todayBtn+
+      moveBtn+
       editBtn+
       xBtn+'</li>';
   }
@@ -830,6 +837,9 @@ button{font-family:inherit}
     }else if(act==='clear-done'){
       for(var ci=todos.length-1;ci>=0;ci--){if(todos[ci].done)todos.splice(ci,1);}
       sfx('clear'); save(K.todo,todos); updateTodo();
+    }else if(act==='restore-todo'){
+      t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
+      t.done=false; t.today=false; sfx('restore'); save(K.todo,todos); updateTodo();
     }else if(act==='edit'){
       t=todos.filter(function(x){return x.id===id})[0]; if(!t)return;
       var rowEl=el.closest('li.fold-row'); if(!rowEl)return;
