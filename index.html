@@ -709,7 +709,7 @@ button{font-family:inherit}
     if(!allBought.length){
       doneInner='<div class="empty fold"><strong>已购清单还是空的</strong><span>买好了的东西点「已购买」，就会出现在这里。</span></div>';
     }else{
-      doneInner='<div class="clearbar fold"><span>已购清单共 '+allBought.length+' 件</span><button type="button" class="act ghost" data-act="clear">清空已购清单</button></div>'+
+      doneInner='<div class="clearbar fold"><span>已购清单共 '+allBought.length+' 件</span><button type="button" class="act ghost" data-act="clear"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> 清空已购清单</button></div>'+
         (done.length?done.map(function(i){return cardHtml(i,bought[i.id])}).join(''):nomatch);
     }
     host.innerHTML=
