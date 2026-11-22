@@ -659,12 +659,12 @@ button{font-family:inherit}
      sections to switch 待购买 / 等折扣. Long-press a card to pick it up;
      a ghost follows the finger and a dashed placeholder shows the drop spot.
      Only active (buy/wait) cards are draggable, not bought ones. ---------- */
-  var shopDrag=null, shopHold=null;
+  var shopDrag=null, shopHold=null, lastShopDragEnd=0;
   function shopPanelOf(card){return card.closest('div.panel')}
   function shopCards(panel){return Array.prototype.slice.call(panel.querySelectorAll('article.card'))}
   function shopSecOf(panel){var s=panel.closest('section.sec');return s?s.id.replace('sec-',''):null}
   $app.addEventListener('pointerdown',function(e){
-    if(e.target.closest('button,a,input,textarea'))return;
+    if(e.target.closest('.act,a.link,input,textarea'))return;
     var card=e.target.closest('article.card'); if(!card)return;
     if(card.closest('#sec-done'))return;
     if(e.pointerType==='mouse'&&e.button!==0)return;
@@ -726,7 +726,7 @@ button{font-family:inherit}
   function endShopDrag(e){
     if(shopHold&&e.pointerId===shopHold.pid){clearTimeout(shopHold.timer);shopHold=null;return}
     if(!shopDrag||e.pointerId!==shopDrag.pid)return;
-    var d=shopDrag; shopDrag=null;
+    var d=shopDrag; shopDrag=null; lastShopDragEnd=Date.now();
     var ghost=d.ghost, ph=d.ph;
     if(ghost.parentNode)ghost.parentNode.removeChild(ghost);
     if(e.type==='pointercancel'){renderShopLists();return}
@@ -1032,6 +1032,7 @@ button{font-family:inherit}
       sfx('clear'); Object.keys(bought).forEach(function(b){if(gone.indexOf(b)<0)gone.push(b)});
       bought={}; save(K.bought,bought); save(K.gone,gone); renderShopLists();
     }else if(act==='pic'){
+      if(Date.now()-lastShopDragEnd<600)return;
       pendingImg=id; document.getElementById('imgInput').click();
     }
   });
