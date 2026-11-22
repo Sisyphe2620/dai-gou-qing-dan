@@ -377,21 +377,22 @@ button{font-family:inherit}
 
   function updateTodo(){
     var host=document.getElementById('todoLists'); if(!host)return;
-    var undone=todos.filter(function(t){return !t.done});
     var todayList=todos.filter(function(t){return t.today&&!t.done});
-    var allList=undone.concat(todos.filter(function(t){return t.done}));
+    var backlog=todos.filter(function(t){return !t.today&&!t.done});
+    var allList=backlog.concat(todos.filter(function(t){return !t.today&&t.done}));
     function panel(key,list){
       if(!todos.length){
         return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><strong>还没有待办事项</strong><span>在上面写一条，点「添加」就记下来了。</span></div></div>';
       }
       if(!list.length){
-        return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><span>今天代办里还没有事。在 List 里点某一条的「今天」，就会放进来。</span></div></div>';
+        var msg=key==='today'?'今天代办里还没有事。在 List 里点某一条的「今天」，就会放进来。':'List 里还没有事。没排进今天的待办都在这里。';
+        return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><span>'+msg+'</span></div></div>';
       }
       return '<ul class="panel" data-panel="'+key+'" style="list-style:none;margin:0;padding:0">'+list.map(rowHtml).join('')+'</ul>';
     }
     host.innerHTML=
       bandHtml({button:true,color:'gold',n:todayList.length,title:'今天代办',desc:'今天要做的事',fold:'today'})+panel('today',todayList)+
-      bandHtml({button:true,color:'clay',n:undone.length,title:'List',desc:'全部待办事项',fold:'all'})+panel('all',allList);
+      bandHtml({button:true,color:'clay',n:backlog.length,title:'List',desc:'还没排进今天的待办',fold:'all'})+panel('all',allList);
     applyFolds();
   }
 
