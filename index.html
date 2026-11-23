@@ -688,6 +688,7 @@ button{font-family:inherit}
         c.parentNode.replaceChild(ph,c);
         shopDrag={id:c.getAttribute('data-id'),srcCat:h.cat,ghost:ghost,ph:ph,
           pid:h.pid,x0:h.x0,y0:h.y0,target:h.cat};
+        try{ph.setPointerCapture(h.pid)}catch(_){}
         if(navigator.vibrate){try{navigator.vibrate(10)}catch(_){}}
       },350)};
   });
