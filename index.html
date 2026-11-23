@@ -103,7 +103,18 @@ button{font-family:inherit}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;height:36px;padding:0 14px;border:2px solid var(--line);background:#fff;font-size:14px;color:var(--ink);cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-.card{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;padding:16px;background:#fff;border-bottom:1px solid var(--line);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.card{display:grid;grid-template-columns:104px minmax(0,1fr) 34px;gap:14px;padding:16px;background:#fff;border-bottom:1px solid var(--line);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.card-ctl{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.chev,.dots{background:none;border:0;padding:6px;cursor:pointer;color:var(--ink-2);line-height:0}
+.chev:disabled{opacity:.3;cursor:default}
+.sheet-wrap{position:fixed;inset:0;z-index:10000;display:flex;align-items:flex-end;justify-content:center}
+.sheet-wrap[hidden]{display:none}
+.sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.sheet{position:relative;width:100%;max-width:480px;background:#fff;border-radius:18px 18px 0 0;padding:14px 16px 22px;box-sizing:border-box}
+.sheet-title{font-weight:700;text-align:center;padding:6px 0 12px;font-size:15px;overflow-wrap:anywhere}
+.sheet-opt{display:block;width:100%;height:50px;border:0;background:var(--sand);margin:0 0 8px;font-size:16px;font-weight:700;color:var(--ink);border-radius:12px;cursor:pointer}
+.sheet-opt:disabled{opacity:.45;cursor:default}
+.sheet-cancel{display:block;width:100%;height:50px;border:0;background:#fff;margin:0;font-size:16px;color:var(--ink);border-radius:12px;cursor:pointer}
 .card:nth-child(odd){background:linear-gradient(#fff 0%,var(--crease) 100%)}
 .card:nth-child(even){background:linear-gradient(var(--crease) 0%,#fff 100%)}
 .pic{width:104px;aspect-ratio:3/4;border:0;padding:0;background:var(--paper);cursor:pointer;overflow:hidden;align-self:start}
@@ -124,7 +135,6 @@ button{font-family:inherit}
 .acts{display:flex;gap:8px;flex-wrap:wrap}
 .act{height:40px;padding:0 16px;border:0;background:var(--gold);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer}
 .act.ghost{background:#fff;border:2px solid var(--clay);color:#9A3F2B}
-.act.move{width:40px;padding:0;font-size:18px}
 .act:disabled{opacity:.35;cursor:default}
 .clearbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-2)}
 .nomatch{padding:28px 20px;background:#fff;text-align:center;color:var(--ink-2);font-size:14px}
@@ -142,6 +152,15 @@ button{font-family:inherit}
 </head>
 <body>
 <div id="app" class="app"></div>
+<div id="sheetWrap" class="sheet-wrap" hidden>
+  <div class="sheet-backdrop" data-sheet="close"></div>
+  <div class="sheet" role="dialog" aria-label="移动商品">
+    <div class="sheet-title" id="sheetTitle"></div>
+    <button type="button" class="sheet-opt" id="sheetToBuy" data-sheet="buy">移到待购买</button>
+    <button type="button" class="sheet-opt" id="sheetToWait" data-sheet="wait">移到等折扣</button>
+    <button type="button" class="sheet-cancel" data-sheet="close">取消</button>
+  </div>
+</div>
 <input type="file" id="imgInput" accept="image/*" hidden>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
@@ -721,20 +740,20 @@ button{font-family:inherit}
     if(i.when)meta+='<div><dt>购买时间</dt><dd>'+esc(i.when)+'</dd></div>';
     if(i.status)meta+='<div><dt>状态</dt><dd>'+i.status+'</dd></div>';
     if(i.next)meta+='<div><dt>下次检查</dt><dd>'+i.next+'</dd></div>';
-    var acts;
+    var acts, ctl='';
     if(ts){
       var left=Math.max(0,Math.ceil((ts+7*DAY-Date.now())/DAY));
       meta+='<div><dt>已购买</dt><dd>还剩 '+left+' 天可恢复</dd></div>';
       acts='<button type="button" class="act" data-act="restore">恢复</button>';
     }else{
-      var cat=effCat(i);
-      var toOther=cat==='buy'?'→等折扣':'→待购买';
+      acts='<button type="button" class="act" data-act="buy">✓ 已购买</button>';
       var upDis=(typeof idx==='number'&&idx<=0)?' disabled':'';
       var dnDis=(typeof idx==='number'&&typeof len==='number'&&idx>=len-1)?' disabled':'';
-      acts='<button type="button" class="act move" data-act="move-up" aria-label="上移"'+upDis+'>↑</button>'+
-        '<button type="button" class="act move" data-act="move-down" aria-label="下移"'+dnDis+'>↓</button>'+
-        '<button type="button" class="act ghost" data-act="switch-cat">'+toOther+'</button>'+
-        '<button type="button" class="act" data-act="buy">✓ 已购买</button>';
+      ctl='<div class="card-ctl">'+
+        '<button type="button" class="chev" data-act="move-up" aria-label="上移"'+upDis+'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5,15 12,8 19,15"/></svg></button>'+
+        '<button type="button" class="chev" data-act="move-down" aria-label="下移"'+dnDis+'><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5,9 12,16 19,9"/></svg></button>'+
+        '<button type="button" class="dots" data-act="card-menu" aria-label="更多"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>'+
+        '</div>';
     }
     return '<article class="card fold" data-id="'+i.id+'">'+
       '<button type="button" class="pic" data-act="pic" aria-label="'+(img?'更换':'添加')+'图片：'+esc(i.name)+'">'+pic+'</button>'+
@@ -742,7 +761,7 @@ button{font-family:inherit}
       '<p class="price">'+i.price+'</p><p class="note">'+esc(i.note)+'</p>'+
       (meta?'<dl class="meta">'+meta+'</dl>':'')+
       (i.link?'<a class="link" href="'+i.link+'" target="_blank" rel="noopener">去淘宝看看 ›</a><br>':'')+
-      '<div class="acts">'+acts+'</div></div></article>';
+      '<div class="acts">'+acts+'</div></div>'+ctl+'</article>';
   }
 
   function moveShop(id,dir){
@@ -761,12 +780,12 @@ button{font-family:inherit}
     sfx('tick');
     renderShopLists();
   }
-  function switchShopCat(id){
+  function moveShopTo(id,target){
     var it=allItems().filter(function(x){return x.id===id})[0];
     if(!it)return;
     var cat=effCat(it);
-    var target=cat==='buy'?'wait':cat==='wait'?'buy':null;
-    if(!target)return;
+    if(target!=='buy'&&target!=='wait')return;
+    if(cat===target)return;
     syncShopOrder();
     var src=shopOrder[cat]||[], tgt=shopOrder[target]||[];
     var si=src.indexOf(id); if(si>=0)src.splice(si,1);
@@ -778,6 +797,30 @@ button{font-family:inherit}
     sfx('tick');
     renderShopLists();
   }
+  var menuItemId=null;
+  function openCardMenu(id){
+    var it=allItems().filter(function(x){return x.id===id})[0];
+    if(!it)return;
+    menuItemId=id;
+    var cat=effCat(it);
+    document.getElementById('sheetTitle').textContent=it.name;
+    var bBuy=document.getElementById('sheetToBuy'), bWait=document.getElementById('sheetToWait');
+    bBuy.disabled=(cat==='buy');
+    bWait.disabled=(cat==='wait');
+    bBuy.textContent=cat==='buy'?'待购买（当前）':'移到待购买';
+    bWait.textContent=cat==='wait'?'等折扣（当前）':'移到等折扣';
+    document.getElementById('sheetWrap').hidden=false;
+  }
+  function closeCardMenu(){
+    menuItemId=null;
+    document.getElementById('sheetWrap').hidden=true;
+  }
+  document.getElementById('sheetWrap').addEventListener('click',function(e){
+    var t=e.target.closest('[data-sheet]'); if(!t)return;
+    var k=t.getAttribute('data-sheet');
+    if(k==='close'){closeCardMenu();return}
+    if(menuItemId){moveShopTo(menuItemId,k);closeCardMenu();}
+  });
 
   function renderShopLists(){
     var host=document.getElementById('shopLists'); if(!host)return;
@@ -964,8 +1007,8 @@ button{font-family:inherit}
       moveShop(id,-1);
     }else if(act==='move-down'){
       moveShop(id,1);
-    }else if(act==='switch-cat'){
-      switchShopCat(id);
+    }else if(act==='card-menu'){
+      openCardMenu(id);
     }else if(act==='buy'){
       sfx('buy'); bought[id]=Date.now(); save(K.bought,bought); renderShopLists();
     }else if(act==='restore'){
