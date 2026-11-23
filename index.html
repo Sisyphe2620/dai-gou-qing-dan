@@ -104,7 +104,6 @@ button{font-family:inherit}
 .chip{flex:none;height:36px;padding:0 14px;border:2px solid var(--line);background:#fff;font-size:14px;color:var(--ink);cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .card{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;padding:16px;background:#fff;border-bottom:1px solid var(--line);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-.card-ph{border:2px dashed var(--gold);border-radius:12px;background:rgba(212,175,55,.10);box-sizing:border-box}
 .card:nth-child(odd){background:linear-gradient(#fff 0%,var(--crease) 100%)}
 .card:nth-child(even){background:linear-gradient(var(--crease) 0%,#fff 100%)}
 .pic{width:104px;aspect-ratio:3/4;border:0;padding:0;background:var(--paper);cursor:pointer;overflow:hidden;align-self:start}
@@ -125,6 +124,8 @@ button{font-family:inherit}
 .acts{display:flex;gap:8px;flex-wrap:wrap}
 .act{height:40px;padding:0 16px;border:0;background:var(--gold);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer}
 .act.ghost{background:#fff;border:2px solid var(--clay);color:#9A3F2B}
+.act.move{width:40px;padding:0;font-size:18px}
+.act:disabled{opacity:.35;cursor:default}
 .clearbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-2)}
 .nomatch{padding:28px 20px;background:#fff;text-align:center;color:var(--ink-2);font-size:14px}
 .howto{padding:28px 20px 44px;background:var(--sand);color:var(--ink);box-shadow:inset 0 1px 0 rgba(58,43,37,.14);margin-top:0}
@@ -656,118 +657,9 @@ button{font-family:inherit}
     if(rowHold&&e.pointerId===rowHold.pid){clearTimeout(rowHold.timer);rowHold=null;}
   });
   $app.addEventListener('touchmove',function(e){
-    if((rowDrag&&rowDrag.longPress)||shopDrag)e.preventDefault();
+    if(rowDrag&&rowDrag.longPress)e.preventDefault();
   },{passive:false});
 
-  /* ---------- shop card drag: reorder within a section, or across
-     sections to switch 待购买 / 等折扣. Long-press a card to pick it up;
-     a ghost follows the finger and a dashed placeholder shows the drop spot.
-     Only active (buy/wait) cards are draggable, not bought ones. ---------- */
-  var shopDrag=null, shopHold=null, lastShopDragEnd=0;
-  function shopPanelOf(card){return card.closest('div.panel')}
-  function shopCards(panel){return Array.prototype.slice.call(panel.querySelectorAll('article.card'))}
-  function shopSecOf(panel){var s=panel.closest('section.sec');return s?s.id.replace('sec-',''):null}
-  $app.addEventListener('pointerdown',function(e){
-    if(e.target.closest('.act,a.link,input,textarea'))return;
-    var card=e.target.closest('article.card'); if(!card)return;
-    if(card.closest('#sec-done'))return;
-    if(e.pointerType==='mouse'&&e.button!==0)return;
-    var panel=shopPanelOf(card); if(!panel)return;
-    var cat=shopSecOf(panel); if(cat!=='buy'&&cat!=='wait')return;
-    shopHold={card:card,pid:e.pointerId,y0:e.clientY,x0:e.clientX,cat:cat,
-      timer:setTimeout(function(){
-        if(!shopHold)return;
-        var h=shopHold; shopHold=null;
-        var c=h.card, r=c.getBoundingClientRect();
-        var ghost=c.cloneNode(true);
-        ghost.style.cssText='position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;z-index:9999;pointer-events:none;box-shadow:0 12px 28px rgba(0,0,0,.28);transform:scale(1.02);opacity:.97;margin:0';
-        document.body.appendChild(ghost);
-        var ph=document.createElement('div');
-        ph.className='card-ph';
-        ph.style.height=r.height+'px';
-        c.parentNode.replaceChild(ph,c);
-        shopDrag={id:c.getAttribute('data-id'),srcCat:h.cat,ghost:ghost,ph:ph,
-          pid:h.pid,x0:h.x0,y0:h.y0,target:h.cat};
-        try{ph.setPointerCapture(h.pid)}catch(_){}
-        if(navigator.vibrate){try{navigator.vibrate(10)}catch(_){}}
-      },350)};
-  });
-  $app.addEventListener('pointermove',function(e){
-    if(shopHold&&e.pointerId===shopHold.pid){
-      if(Math.abs(e.clientY-shopHold.y0)>10||Math.abs(e.clientX-shopHold.x0)>10){
-        clearTimeout(shopHold.timer); shopHold=null;
-      }
-      return;
-    }
-    if(!shopDrag||e.pointerId!==shopDrag.pid)return;
-    var d=shopDrag;
-    var dx=e.clientX-d.x0, dy=e.clientY-d.y0;
-    d.ghost.style.transform='translate('+dx+'px,'+dy+'px) scale(1.02)';
-    var buySec=document.getElementById('sec-buy'), waitSec=document.getElementById('sec-wait');
-    var target=d.target;
-    if(buySec&&waitSec){
-      var br=buySec.getBoundingClientRect(), wr=waitSec.getBoundingClientRect();
-      if(e.clientY<br.bottom)target='buy';
-      else if(e.clientY>wr.top)target='wait';
-      else target=(e.clientY<(br.bottom+wr.top)/2)?'buy':'wait';
-    }
-    d.target=target;
-    var panel=document.querySelector('#sec-'+target+' div.panel');
-    if(!panel)return;
-    var cards=shopCards(panel);
-    var insert=0;
-    cards.forEach(function(cd){
-      var cr=cd.getBoundingClientRect();
-      if(e.clientY>cr.top+cr.height/2)insert++;
-    });
-    var ref=cards[insert]||null;
-    if(d.ph.parentNode!==panel||d.ph.nextSibling!==ref){
-      if(ref)panel.insertBefore(d.ph,ref);
-      else panel.appendChild(d.ph);
-    }
-  });
-  function endShopDrag(e){
-    if(shopHold&&e.pointerId===shopHold.pid){clearTimeout(shopHold.timer);shopHold=null;return}
-    if(!shopDrag||e.pointerId!==shopDrag.pid)return;
-    var d=shopDrag; shopDrag=null; lastShopDragEnd=Date.now();
-    var ghost=d.ghost, ph=d.ph;
-    if(ghost.parentNode)ghost.parentNode.removeChild(ghost);
-    if(e.type==='pointercancel'){renderShopLists();return}
-    var panel=ph.parentNode;
-    var targetCat=panel?shopSecOf(panel):d.srcCat;
-    if(targetCat!=='buy'&&targetCat!=='wait')targetCat=d.srcCat;
-    var cards=panel?shopCards(panel):[];
-    var beforeId=null;
-    if(panel){
-      var sib=ph.nextSibling;
-      while(sib&&!(sib.classList&&sib.classList.contains('card')))sib=sib.nextSibling;
-      if(sib)beforeId=sib.getAttribute('data-id');
-    }
-    syncShopOrder();
-    var srcArr=shopOrder[d.srcCat]||[], tgtArr=shopOrder[targetCat]||[];
-    var si=srcArr.indexOf(d.id); if(si>=0)srcArr.splice(si,1);
-    if(targetCat!==d.srcCat){
-      var ti=tgtArr.indexOf(d.id); if(ti>=0)tgtArr.splice(ti,1);
-      catOv[d.id]=targetCat;
-    }
-    var full=(targetCat===d.srcCat)?srcArr:tgtArr;
-    if(beforeId){
-      var bi=full.indexOf(beforeId);
-      if(bi>=0)full.splice(bi,0,d.id);
-      else full.push(d.id);
-    }else{
-      var lastVis=cards.length?cards[cards.length-1].getAttribute('data-id'):null;
-      var li=lastVis?full.indexOf(lastVis):-1;
-      if(li>=0)full.splice(li+1,0,d.id);
-      else full.push(d.id);
-    }
-    shopOrder[d.srcCat]=srcArr; shopOrder[targetCat]=tgtArr;
-    save(K.order,shopOrder); save(K.cat,catOv);
-    sfx('tick');
-    renderShopLists();
-  }
-  $app.addEventListener('pointerup',endShopDrag);
-  $app.addEventListener('pointercancel',endShopDrag);
 
   function viewShop(){
     var a=activeItems();
@@ -816,7 +708,7 @@ button{font-family:inherit}
       '<main id="shopLists"></main>'+howto();
   }
 
-  function cardHtml(i,ts){
+  function cardHtml(i,ts,idx,len){
     var img=imgs[i.id]||i.img;
     var pic=img?'<img src="'+img+'" alt="'+esc(i.name)+'">':
       '<span class="ph"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg><b>待添加</b></span>';
@@ -835,7 +727,14 @@ button{font-family:inherit}
       meta+='<div><dt>已购买</dt><dd>还剩 '+left+' 天可恢复</dd></div>';
       acts='<button type="button" class="act" data-act="restore">恢复</button>';
     }else{
-      acts='<button type="button" class="act" data-act="buy">✓ 已购买</button>';
+      var cat=effCat(i);
+      var toOther=cat==='buy'?'→等折扣':'→待购买';
+      var upDis=(typeof idx==='number'&&idx<=0)?' disabled':'';
+      var dnDis=(typeof idx==='number'&&typeof len==='number'&&idx>=len-1)?' disabled':'';
+      acts='<button type="button" class="act move" data-act="move-up" aria-label="上移"'+upDis+'>↑</button>'+
+        '<button type="button" class="act move" data-act="move-down" aria-label="下移"'+dnDis+'>↓</button>'+
+        '<button type="button" class="act ghost" data-act="switch-cat">'+toOther+'</button>'+
+        '<button type="button" class="act" data-act="buy">✓ 已购买</button>';
     }
     return '<article class="card fold" data-id="'+i.id+'">'+
       '<button type="button" class="pic" data-act="pic" aria-label="'+(img?'更换':'添加')+'图片：'+esc(i.name)+'">'+pic+'</button>'+
@@ -844,6 +743,40 @@ button{font-family:inherit}
       (meta?'<dl class="meta">'+meta+'</dl>':'')+
       (i.link?'<a class="link" href="'+i.link+'" target="_blank" rel="noopener">去淘宝看看 ›</a><br>':'')+
       '<div class="acts">'+acts+'</div></div></article>';
+  }
+
+  function moveShop(id,dir){
+    var it=allItems().filter(function(x){return x.id===id})[0];
+    if(!it)return;
+    var cat=effCat(it);
+    if(cat!=='buy'&&cat!=='wait')return;
+    syncShopOrder();
+    var arr=shopOrder[cat]||[];
+    var ix=arr.indexOf(id);
+    if(ix<0)return;
+    var j=ix+dir;
+    if(j<0||j>=arr.length)return;
+    var t=arr[ix];arr[ix]=arr[j];arr[j]=t;
+    save(K.order,shopOrder);
+    sfx('tick');
+    renderShopLists();
+  }
+  function switchShopCat(id){
+    var it=allItems().filter(function(x){return x.id===id})[0];
+    if(!it)return;
+    var cat=effCat(it);
+    var target=cat==='buy'?'wait':cat==='wait'?'buy':null;
+    if(!target)return;
+    syncShopOrder();
+    var src=shopOrder[cat]||[], tgt=shopOrder[target]||[];
+    var si=src.indexOf(id); if(si>=0)src.splice(si,1);
+    var ti=tgt.indexOf(id); if(ti>=0)tgt.splice(ti,1);
+    if(target===it.cat)delete catOv[id]; else catOv[id]=target;
+    tgt.push(id);
+    shopOrder[cat]=src; shopOrder[target]=tgt;
+    save(K.order,shopOrder); save(K.cat,catOv);
+    sfx('tick');
+    renderShopLists();
   }
 
   function renderShopLists(){
@@ -875,8 +808,8 @@ button{font-family:inherit}
         (done.length?done.map(function(i){return cardHtml(i,bought[i.id])}).join(''):nomatch);
     }
     host.innerHTML=
-      sec('buy','clay','待购买','近期就要买，别拖',buy,buy.length?buy.map(function(i){return cardHtml(i)}).join(''):nomatch)+
-      sec('wait','gold','等折扣','先观望，等降价或有活动再买',wait,wait.length?wait.map(function(i){return cardHtml(i)}).join(''):nomatch)+
+      sec('buy','clay','待购买','近期就要买，别拖',buy,buy.length?buy.map(function(i,ix){return cardHtml(i,0,ix,buy.length)}).join(''):nomatch)+
+      sec('wait','gold','等折扣','先观望，等降价或有活动再买',wait,wait.length?wait.map(function(i,ix){return cardHtml(i,0,ix,wait.length)}).join(''):nomatch)+
       sec('done','lime','已购清单','7 天内可恢复，过期自动删除',done,doneInner);
     applyFolds();
   }
@@ -1027,6 +960,12 @@ button{font-family:inherit}
       var sibs=el.parentNode.querySelectorAll('.chip');
       for(var k=0;k<sibs.length;k++)sibs[k].setAttribute('aria-pressed',sibs[k]===el?'true':'false');
       renderShopLists();
+    }else if(act==='move-up'){
+      moveShop(id,-1);
+    }else if(act==='move-down'){
+      moveShop(id,1);
+    }else if(act==='switch-cat'){
+      switchShopCat(id);
     }else if(act==='buy'){
       sfx('buy'); bought[id]=Date.now(); save(K.bought,bought); renderShopLists();
     }else if(act==='restore'){
@@ -1035,7 +974,6 @@ button{font-family:inherit}
       sfx('clear'); Object.keys(bought).forEach(function(b){if(gone.indexOf(b)<0)gone.push(b)});
       bought={}; save(K.bought,bought); save(K.gone,gone); renderShopLists();
     }else if(act==='pic'){
-      if(Date.now()-lastShopDragEnd<600)return;
       pendingImg=id; document.getElementById('imgInput').click();
     }
   });
