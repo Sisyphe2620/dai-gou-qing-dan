@@ -53,6 +53,11 @@ button{font-family:inherit}
 .fold-band{touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .fold-band::before{content:"";position:absolute;left:50%;bottom:7px;width:44px;height:4px;margin-left:-22px;background:currentColor;opacity:.3;border-radius:2px;transition:opacity .2s}
 .fold-band[aria-expanded="true"]::before{opacity:.55}
+.band-wrap{position:relative}
+.band-clear{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:none;height:36px;padding:0 12px;border:2px solid var(--clay);background:#fff;color:#9A3F2B;font-weight:700;font-size:14px;cursor:pointer;align-items:center;gap:6px;z-index:2}
+.band-clear svg{display:block}
+.band-wrap .fold-band[aria-expanded="true"]+.band-clear{display:inline-flex}
+.band-wrap .fold-band[aria-expanded="true"] .bar{display:none}
 
 /* add box */
 .add{display:flex;gap:10px;padding:14px 16px;background:#fff;border-bottom:1px solid var(--line)}
@@ -433,15 +438,13 @@ button{font-family:inherit}
         return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><span>'+msg+'</span></div></div>';
       }
       var rows=list.map(function(t,i){return rowHtml(t,i,key)}).join('');
-      if(key==='done'){
-        rows='<li class="clearbar fold"><span>已完成共 '+list.length+' 件</span><button type="button" class="act ghost" data-act="clear-done" aria-label="清空已完成"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> 清空</button></li>'+rows;
-      }
       return '<ul class="panel" data-panel="'+key+'" style="list-style:none;margin:0;padding:0">'+rows+'</ul>';
     }
+    var doneClear=doneList.length?'<button type="button" class="band-clear" data-act="clear-done" aria-label="清空已完成"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> 清空</button>':'';
     host.innerHTML=
       bandHtml({button:true,color:'gold',n:todayList.length,title:'今天待办',desc:'今天要做的事',fold:'today'})+panel('today',todayList)+
       bandHtml({button:true,color:'clay',n:backlog.length,title:'List',desc:'还没排进今天的待办',fold:'all'})+panel('all',backlog)+
-      bandHtml({button:true,color:'lime',n:doneList.length,title:'已完成',desc:'做完了的都在这里',fold:'done'})+panel('done',doneList);
+      '<div class="band-wrap">'+bandHtml({button:true,color:'lime',n:doneList.length,title:'已完成',desc:'做完了的都在这里',fold:'done'})+doneClear+'</div>'+panel('done',doneList);
     applyFolds();
   }
 
