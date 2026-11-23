@@ -11,7 +11,7 @@
 /* Layout idea: a phone-width column of flat colour bands; the open band unfolds its list like creased paper. */
 :root{
   --paper:#F8F3EA; --card:#FFFFFF; --ink:#3A2B25; --ink-2:#6F5F55; --line:#E4DAC9; --crease:#EBE0CF;
-  --gold:#F4B13B; --clay:#E0745E; --sand:#F2E6D6; --sage:#9CAF88; --on-clay:#2A1A15;
+  --gold:#F4B13B; --clay:#E0745E; --sand:#F2E6D6; --lime:#9EB823; --on-clay:#2A1A15;
   --display:'Jost','Noto Sans SC',system-ui,sans-serif;
   --body:'Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
 }
@@ -49,7 +49,7 @@ button{font-family:inherit}
 .c-sand .bar{background:var(--clay)}
 .c-clay{background:var(--clay);color:var(--on-clay)}
 .c-clay .bar{background:rgba(255,255,255,.55)}
-.c-sage{background:var(--sage)}
+.c-lime{background:var(--lime)}
 .fold-band{touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .fold-band::before{content:"";position:absolute;left:50%;bottom:7px;width:44px;height:4px;margin-left:-22px;background:currentColor;opacity:.3;border-radius:2px;transition:opacity .2s}
 .fold-band[aria-expanded="true"]::before{opacity:.55}
@@ -441,7 +441,7 @@ button{font-family:inherit}
     host.innerHTML=
       bandHtml({button:true,color:'gold',n:todayList.length,title:'今天代办',desc:'今天要做的事',fold:'today'})+panel('today',todayList)+
       bandHtml({button:true,color:'clay',n:backlog.length,title:'List',desc:'还没排进今天的待办',fold:'all'})+panel('all',backlog)+
-      bandHtml({button:true,color:'sage',n:doneList.length,title:'已完成',desc:'做完了的都在这里',fold:'done'})+panel('done',doneList);
+      bandHtml({button:true,color:'lime',n:doneList.length,title:'已完成',desc:'做完了的都在这里',fold:'done'})+panel('done',doneList);
     applyFolds();
   }
 
@@ -778,7 +778,7 @@ button{font-family:inherit}
       '<main>'+
       bandHtml({href:'#shop-list',color:'clay',n:buyN,title:'待购买',desc:'近期就要买，别拖',attrs:'data-focus="buy"'})+
       bandHtml({href:'#shop-list',color:'gold',n:waitN,title:'等折扣',desc:'先观望，等降价或有活动再买',attrs:'data-focus="wait"'})+
-      bandHtml({href:'#shop-list',color:'sage',n:doneN,title:'已购清单',desc:'买好了的都在这里，7 天内可恢复',attrs:'data-focus="done"'})+
+      bandHtml({href:'#shop-list',color:'lime',n:doneN,title:'已购清单',desc:'买好了的都在这里，7 天内可恢复',attrs:'data-focus="done"'})+
       '</main>'+howto();
   }
   function howto(){return '<footer class="howto"><h4>怎么往里加</h4><p>'+esc(HOWTO)+'</p></footer>'}
@@ -874,7 +874,7 @@ button{font-family:inherit}
     host.innerHTML=
       sec('buy','clay','待购买','近期就要买，别拖',buy,buy.length?buy.map(function(i){return cardHtml(i)}).join(''):nomatch)+
       sec('wait','gold','等折扣','先观望，等降价或有活动再买',wait,wait.length?wait.map(function(i){return cardHtml(i)}).join(''):nomatch)+
-      sec('done','sage','已购清单','7 天内可恢复，过期自动删除',done,doneInner);
+      sec('done','lime','已购清单','7 天内可恢复，过期自动删除',done,doneInner);
     applyFolds();
   }
 
