@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>我的代办事项</title>
+<title>我的待办事项</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -380,17 +380,17 @@ button{font-family:inherit}
     var todoN=todos.filter(function(t){return !t.done}).length;
     var shopN=activeItems().length;
     return '<header class="hero hero-sand"><div class="stamp"><small>'+(d.getMonth()+1)+' 月 · 周'+wk+'</small><b>'+pad(d.getDate())+'</b></div>'+
-      '<h1>我的代办事项</h1>'+
-      '<p>两件事放在一起：代办事项是今天要做的事和全部待办；购物清单是想买还没下单的东西。点下面的模块进去。</p></header>'+
+      '<h1>我的待办事项</h1>'+
+      '<p>两件事放在一起：待办事项是今天要做的事和全部待办；购物清单是想买还没下单的东西。点下面的模块进去。</p></header>'+
       '<main class="home-bands">'+
-      bandHtml({href:'#todo',color:'gold',n:todoN,title:'代办事项',desc:'今天要做的事，和全部待办'})+
+      bandHtml({href:'#todo',color:'gold',n:todoN,title:'待办事项',desc:'今天要做的事，和全部待办'})+
       bandHtml({href:'#shop',color:'clay',n:shopN,title:'购物清单',desc:'想买，还没下单的东西'})+
       '</main>';
   }
 
   function viewTodo(){
-    return '<header class="hero hero-gold">'+back('#home','首页')+'<h1>代办事项</h1>'+
-      '<p>下面写一条要做的事。List 里点「今天」进今天代办，今天代办里点「List」回 List。做完了点 ×，进下面的「已完成」；在「已完成」里点「恢复」回 List，点 × 是彻底删掉，点垃圾桶一次清空全部已完成。</p></header>'+
+    return '<header class="hero hero-gold">'+back('#home','首页')+'<h1>待办事项</h1>'+
+      '<p>下面写一条要做的事。List 里点「今天」进今天待办，今天待办里点「List」回 List。做完了点 ×，进下面的「已完成」；在「已完成」里点「恢复」回 List，点 × 是彻底删掉，点垃圾桶一次清空全部已完成。</p></header>'+
       '<form class="add" id="addForm" autocomplete="off"><label class="sr" for="newTodo">新的待办</label>'+
       '<input id="newTodo" type="text" placeholder="写一条要做的事…" maxlength="200">'+
       '<button type="button" id="micBtn" class="mic" data-act="voice" aria-label="语音输入"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></button>'+
@@ -429,7 +429,7 @@ button{font-family:inherit}
         return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><strong>还没有待办事项</strong><span>在上面写一条，点「添加」就记下来了。</span></div></div>';
       }
       if(!list.length){
-        var msg=key==='today'?'今天代办里还没有事。在 List 里点某一条的「今天」，就会放进来。':key==='done'?'还没有已完成的事项。做完了的会到这里来。':'List 里还没有事。没排进今天的待办都在这里。';
+        var msg=key==='today'?'今天待办里还没有事。在 List 里点某一条的「今天」，就会放进来。':key==='done'?'还没有已完成的事项。做完了的会到这里来。':'List 里还没有事。没排进今天的待办都在这里。';
         return '<div class="panel" data-panel="'+key+'"><div class="empty fold"><span>'+msg+'</span></div></div>';
       }
       var rows=list.map(function(t,i){return rowHtml(t,i,key)}).join('');
@@ -439,7 +439,7 @@ button{font-family:inherit}
       return '<ul class="panel" data-panel="'+key+'" style="list-style:none;margin:0;padding:0">'+rows+'</ul>';
     }
     host.innerHTML=
-      bandHtml({button:true,color:'gold',n:todayList.length,title:'今天代办',desc:'今天要做的事',fold:'today'})+panel('today',todayList)+
+      bandHtml({button:true,color:'gold',n:todayList.length,title:'今天待办',desc:'今天要做的事',fold:'today'})+panel('today',todayList)+
       bandHtml({button:true,color:'clay',n:backlog.length,title:'List',desc:'还没排进今天的待办',fold:'all'})+panel('all',backlog)+
       bandHtml({button:true,color:'lime',n:doneList.length,title:'已完成',desc:'做完了的都在这里',fold:'done'})+panel('done',doneList);
     applyFolds();
