@@ -231,7 +231,7 @@ button{font-family:inherit}
     if(changed){save(K.order,shopOrder);save(K.cat,catOv)}
   }
 
-  /* 旧版商品 id → 新版 id 映射（2026-11-21 换版时保留已购/换图数据） */
+  /* 旧版商品 id → 新版 id 映射（2026-11-21 换版时保留已购/换图数据；2026-11-22 补上顺序与分类覆盖，否则旧 id 会被 syncShopOrder 当成无效项丢掉、顺序每次重开都回到默认） */
   (function(){
     var MAP={'basin':'metal-basin','gundam-snake-stand':'snake-base','model-grass':'sand-grass','gundam-floor-stand':'gundam-stand','black-baseball-cap':'black-cap','stormtrooper-kenner':'stormtrooper','batman-inart':'inart-batman'};
     var changed=false;
@@ -241,8 +241,13 @@ button{font-family:inherit}
       var gi=gone.indexOf(old);
       if(gi>=0){gone.splice(gi,1);if(gone.indexOf(nw)<0)gone.push(nw);changed=true}
       if(old in imgs){imgs[nw]=imgs[old];delete imgs[old];changed=true}
+      ['buy','wait'].forEach(function(c){
+        var arr=shopOrder[c]||[];
+        for(var k=0;k<arr.length;k++){if(arr[k]===old){arr[k]=nw;changed=true}}
+      });
+      if(old in catOv){catOv[nw]=catOv[old];delete catOv[old];changed=true}
     });
-    if(changed){save(K.bought,bought);save(K.gone,gone);save(K.img,imgs)}
+    if(changed){save(K.bought,bought);save(K.gone,gone);save(K.img,imgs);save(K.order,shopOrder);save(K.cat,catOv)}
   })();
 
   function expire(){
