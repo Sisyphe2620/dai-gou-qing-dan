@@ -11,7 +11,7 @@
 /* Layout idea: a phone-width column of flat colour bands; the open band unfolds its list like creased paper. */
 :root{
   --paper:#F8F3EA; --card:#FFFFFF; --ink:#3A2B25; --ink-2:#6F5F55; --line:#E4DAC9; --crease:#EBE0CF;
-  --gold:#F4B13B; --clay:#E0745E; --sand:#F2E6D6; --lime:#9EB823; --red:#D2514C; --on-clay:#2A1A15;
+  --gold:#F4B13B; --clay:#E0745E; --sand:#F2E6D6; --lime:#9EB823; --on-clay:#2A1A15;
   --display:'Jost','Noto Sans SC',system-ui,sans-serif;
   --body:'Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
 }
@@ -33,7 +33,6 @@ button{font-family:inherit}
 .hero-sand{background:var(--sand);color:var(--ink)}
 .hero-gold{background:var(--gold);color:var(--ink)}
 .hero-clay{background:var(--clay);color:var(--on-clay)}
-.hero-red{background:var(--red);color:#fff}
 .back{align-self:flex-start;text-decoration:none;font-weight:500;font-size:15px;min-height:44px;display:inline-flex;align-items:center;margin:-6px 0 -2px -8px;padding:0 8px}
 .stamp{display:flex;flex-direction:column;font-family:var(--display);padding-top:6px}
 .stamp small{font-size:13px;letter-spacing:.16em;font-weight:500}
@@ -772,7 +771,7 @@ button{font-family:inherit}
     var buyN=a.filter(function(i){return i.cat==='buy'}).length;
     var waitN=a.filter(function(i){return i.cat==='wait'}).length;
     var doneN=boughtItems().length;
-    return '<header class="hero hero-red">'+back('#home','首页')+'<h1>想买，还没下单的</h1>'+
+    return '<header class="hero hero-clay">'+back('#home','首页')+'<h1>想买，还没下单的</h1>'+
       '<p>这张清单收着所有计划代购、还没买的东西，分成两类：待购买的近期就要买；等折扣的不急，盯着价格，降了再出手。点下面的板块进去，看每一类都有些什么。买好了的点「已购买」，会进「已购清单」，7 天内还能恢复。</p></header>'+
       shopAddHtml()+
       '<div class="stats"><div><b>'+pad(a.length)+'</b><span>清单总数</span></div><div><b>'+pad(buyN)+'</b><span>待购买</span></div><div><b>'+pad(waitN)+'</b><span>等折扣</span></div></div>'+
