@@ -122,6 +122,7 @@ button{font-family:inherit}
 .sheet-new input{flex:1;height:44px;border:2px solid var(--line);padding:0 12px;font-size:15px;background:#fff;box-sizing:border-box;min-width:0}
 .sheet-new button{flex:none;height:44px;padding:0 16px;border:0;background:var(--ink);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
 .sheet-confirm{display:block;width:100%;height:50px;border:0;background:var(--gold);margin:0 0 8px;font-size:16px;font-weight:700;color:var(--ink);border-radius:12px;cursor:pointer}
+.sheet-opt.sheet-danger{background:#fff;border:2px solid var(--clay);color:#9A3F2B}
 .card:nth-child(odd){background:linear-gradient(#fff 0%,var(--crease) 100%)}
 .card:nth-child(even){background:linear-gradient(var(--crease) 0%,#fff 100%)}
 .pic{width:104px;aspect-ratio:3/4;border:0;padding:0;background:var(--paper);cursor:pointer;overflow:hidden;align-self:start}
@@ -179,7 +180,7 @@ button{font-family:inherit}
 <script>
 (function(){
   var DAY=86400000;
-  var HOWTO='在上面写要买的东西，点麦克风可以直接语音输入，选好「待购买」还是「等折扣」，点「添加」后会弹出选择框，让你选购买地点和物品类型，也可以自己新建地点和类型。卡片上的地点和类型标签点一下就能直接改，没填的显示「待定」和「未分类」，点一下就能补上；卡片右边的 ⋯ 也能改地点、类型和归类。最上面两排标签：点一下是筛选，点标签上的 × 是删掉这个标签，末尾的 ＋ 可以新建标签。买好了点卡片上的「已购买」，东西会进「已购清单」，7 天内可以恢复，超过 7 天自动删除；已购清单里的「清空」会一次删掉里面的全部东西。';
+  var HOWTO='在上面写要买的东西，点麦克风可以直接语音输入，选好「待购买」还是「等折扣」，点「添加」后会弹出选择框，让你选购买地点和物品类型，也可以自己新建地点和类型。卡片上的地点和类型标签点一下就能直接改，没填的显示「待定」和「未分类」，点一下就能补上，弹窗里点「去掉购买地点」或「去掉物品类型」可以删掉这件商品的这个标签；卡片右边的 ⋯ 也能改地点、类型和归类。最上面两排标签：点一下是筛选，点标签上的 × 是删掉这个标签，末尾的 ＋ 可以新建标签。买好了点卡片上的「已购买」，东西会进「已购清单」，7 天内可以恢复，超过 7 天自动删除；已购清单里的「清空」会一次删掉里面的全部东西。';
 
   var ITEMS=[
     {id:'metal-basin',cat:'buy',name:'金属带孔盆',place:'宜家',type:'厨具类',price:'待定',note:'去宜家买，具体款式和价格到店再定。'},
@@ -950,7 +951,8 @@ button{font-family:inherit}
       var it2=allItems().filter(function(x){return x.id===menuItemId})[0];
       if(!it2){closeSheet();return}
       title.textContent=it2.name+' · 改'+(tagKind==='place'?'购买地点':'物品类型');
-      body.innerHTML=sheetSec(tagKind,tagKind==='place'?'购买地点':'物品类型',sheetSel[tagKind]);
+      body.innerHTML=sheetSec(tagKind,tagKind==='place'?'购买地点':'物品类型',sheetSel[tagKind])+
+        (sheetSel[tagKind]?'<button type="button" class="sheet-opt sheet-danger" data-sheet="tag-remove">去掉'+(tagKind==='place'?'购买地点':'物品类型')+'</button>':'');
     }
     if(sheetNew){
       var inp=document.getElementById('sheetNewInput');
@@ -1048,6 +1050,14 @@ button{font-family:inherit}
     var k=t.getAttribute('data-sheet');
     if(k==='close'){closeSheet();return}
     if(k==='buy'||k==='wait'){if(menuItemId){moveShopTo(menuItemId,k);closeSheet();}return}
+    if(k==='tag-remove'&&sheetMode==='tag'){
+      var rk=tagKind;
+      sheetSel[rk]='';
+      applyTagKind(rk);
+      closeSheet();
+      toast('已去掉'+(rk==='place'?'购买地点':'物品类型'));
+      return;
+    }
     if(k==='add-confirm'){
       if(!addDraft){closeSheet();return}
       var nm=addDraft.name;
