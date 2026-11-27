@@ -819,10 +819,14 @@ button{font-family:inherit}
       '<button type="button" class="chip" data-act="shopcat" data-cat="wait" aria-pressed="'+(shopCat==='wait')+'">等折扣</button></div>';
   }
 
+  function filtersHtml(){
+    return '<div class="fl"><span class="lab">购买地点</span><div class="chips" role="group" aria-label="按购买地点筛选">'+chipsHtml('place','全部',effPlaces(),ui.place)+labelAddHtml('place')+'</div></div>'+
+      '<div class="fl"><span class="lab">物品类型</span><div class="chips" role="group" aria-label="按物品类型筛选">'+chipsHtml('type','全部类型',effTypes(),ui.type)+labelAddHtml('type')+'</div></div>';
+  }
+
   function viewShopList(){
     return '<header class="hero hero-sand">'+back('#shop','购物清单')+'<h1>想买，还没下单的</h1></header>'+
-      '<div class="filters"><div class="fl"><span class="lab">购买地点</span><div class="chips" role="group" aria-label="按购买地点筛选">'+chipsHtml('place','全部',effPlaces(),ui.place)+labelAddHtml('place')+'</div></div>'+
-      '<div class="fl"><span class="lab">物品类型</span><div class="chips" role="group" aria-label="按物品类型筛选">'+chipsHtml('type','全部类型',effTypes(),ui.type)+labelAddHtml('type')+'</div></div></div>'+
+      '<div class="filters" id="shopFilters">'+filtersHtml()+'</div>'+
       '<form class="add" id="shopAddForm" autocomplete="off"><label class="sr" for="newItem">新的商品</label>'+
       '<input id="newItem" type="text" placeholder="写要买的东西…" maxlength="200">'+
       '<button type="button" class="mic" data-act="voice" aria-label="语音输入"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></button>'+
@@ -1058,6 +1062,18 @@ button{font-family:inherit}
   });
 
   function renderShopLists(){
+    /* the filter bar lives outside #shopLists, so re-render it here too —
+       otherwise adding/deleting a label only shows after a refresh. */
+    var f=document.getElementById('shopFilters');
+    if(f){
+      var li=document.getElementById('labelNewInput');
+      var pv=li?li.value:null;
+      f.innerHTML=filtersHtml();
+      if(pv!==null&&addingLabel){
+        var ni=document.getElementById('labelNewInput');
+        if(ni){ni.value=pv;ni.focus();}
+      }
+    }
     var host=document.getElementById('shopLists'); if(!host)return;
     expire();
     syncShopOrder();
@@ -1169,6 +1185,14 @@ button{font-family:inherit}
     try{rec.start();setListening(true,btn)}catch(_){setListening(false)}
   }
 
+  /* label input keys, delegated so they survive the filter bar re-render. */
+  $app.addEventListener('keydown',function(e){
+    if(e.target&&e.target.id==='labelNewInput'){
+      if(e.key==='Enter'){e.preventDefault();saveLabelFromInput();}
+      else if(e.key==='Escape'){e.preventDefault();addingLabel=null;renderShopLists();}
+    }
+  });
+
   /* ---------- events ---------- */
   $app.addEventListener('click',function(e){
     var f=e.target.closest('a[data-focus]');
@@ -1249,13 +1273,9 @@ button{font-family:inherit}
     }else if(act==='addlabel'){
       addingLabel=el.getAttribute('data-group');
       renderShopLists();
-      setTimeout(function(){
-        var inp=document.getElementById('labelNewInput');
-        if(inp){inp.focus();inp.addEventListener('keydown',function(ev){
-          if(ev.key==='Enter'){ev.preventDefault();saveLabelFromInput();}
-          else if(ev.key==='Escape'){ev.preventDefault();addingLabel=null;renderShopLists();}
-        });}
-      },50);
+      /* focus synchronously so iOS opens the keyboard in the tap gesture. */
+      var inp=document.getElementById('labelNewInput');
+      if(inp)inp.focus();
     }else if(act==='savelabel'){
       saveLabelFromInput();
     }else if(act==='dellabel'){
