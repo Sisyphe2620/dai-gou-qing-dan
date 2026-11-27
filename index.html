@@ -207,6 +207,16 @@ button{font-family:inherit}
     todos=add.concat(todos);
     save(K.todo,todos); save('todo-seed-20261124',true);
   }
+  /* One-time seed (2026-11-26): three health todos he dictated on
+     the call. Runs once — adds any that aren't already there
+     (matched by exact text), then sets a flag so it never repeats. */
+  if(!load('todo-seed-20261126',false)){
+    var seed=['蛋白质：每次补充要足够，间隔四到五个小时','做五到十分钟的冥想和呼吸，帮助神经系统重启并且降低皮质醇','久坐两到三个小时左右，必须站起来活动两三分钟，以保证给细胞提供足够的养分，维持线粒体的能量'];
+    var have={}; todos.forEach(function(t){have[t.text]=1});
+    var add=seed.filter(function(s){return !have[s]}).map(function(s){return {id:uid(),text:s,done:false,today:true}});
+    todos=add.concat(todos);
+    save(K.todo,todos); save('todo-seed-20261126',true);
+  }
   var bought=load(K.bought,{}); if(!isObj(bought))bought={};
   var gone=load(K.gone,[]); if(!Array.isArray(gone))gone=[];
   var imgs=load(K.img,{}); if(!isObj(imgs))imgs={};
